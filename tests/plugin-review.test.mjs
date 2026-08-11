@@ -15,6 +15,7 @@ import {
   parseReleaseAssetUrl,
   parseRepositorySlug,
   renderRelayedComment,
+  shouldRelayIssueComment,
   sourceLineUrl,
 } from "../scripts/plugin-review.mjs";
 
@@ -125,6 +126,12 @@ test("recognizes only supported review services", () => {
   assert.equal(classifyReviewer("random-reviewer"), null);
 });
 
+test("keeps CodeRabbit operational comments out of Registry reviews", () => {
+  assert.equal(shouldRelayIssueComment("coderabbit"), false);
+  assert.equal(shouldRelayIssueComment("codex"), true);
+  assert.equal(shouldRelayIssueComment("greptile"), true);
+});
+
 test("maps inline comments to immutable proposed and previous source links", () => {
   assert.equal(
     sourceLineUrl(metadata, {
@@ -205,7 +212,7 @@ test("renders all reviewer states into one idempotent Registry comment", () => {
       }],
       coderabbit: [],
       greptile: [{
-        type: "summary",
+        type: "status",
         body: "No blocking issue found.",
         state: "APPROVED",
         url: "https://github.com/Anezium/RokidBrew-Plugin-Reviews/pull/1#pullrequestreview-1",
@@ -214,7 +221,9 @@ test("renders all reviewer states into one idempotent Registry comment", () => {
   );
   assert.ok(body.startsWith(ORIGIN_COMMENT_MARKER));
   assert.match(body, /This owner check is missing/);
-  assert.match(body, /CodeRabbit[\s\S]*Waiting/);
-  assert.match(body, /No blocking issue found/);
+  assert.match(body, /CodeRabbit[\s\S]*Pending/);
+  assert.match(body, /Greptile[\s\S]*No findings reported/);
+  assert.doesNotMatch(body, /No blocking issue found/);
+  assert.doesNotMatch(body, /Review output/);
   assert.match(body, /provenance, signer, manifest, descriptor, and feed/);
 });

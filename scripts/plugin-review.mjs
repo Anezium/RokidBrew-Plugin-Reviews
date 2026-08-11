@@ -23,7 +23,7 @@ export const ORIGIN_COMMENT_MARKER = "<!-- rokidbrew-plugin-source-review -->";
 export const REVIEW_MARKER_PREFIX = "<!-- rokidbrew-plugin-review:v1 ";
 
 const EXPECTED_REVIEWERS = ["codex", "coderabbit", "greptile"];
-const CODERABBIT_REVIEW_COMMAND = "@coderabbitai review";
+const REVIEW_COMMANDS = ["@codex review", "@coderabbitai review", "@greptileai"];
 const REVIEWER_LABELS = {
   codex: "Codex",
   coderabbit: "CodeRabbit",
@@ -702,12 +702,14 @@ async function prepareReview(options) {
     await githubApi(reviewToken, "POST", `/repos/${reviewRepository}/issues/${reviewPull.number}/labels`, {
       labels: [REVIEW_LABEL],
     });
-    await githubApi(
-      registryToken,
-      "POST",
-      `/repos/${reviewRepository}/issues/${reviewPull.number}/comments`,
-      { body: CODERABBIT_REVIEW_COMMAND },
-    );
+    for (const command of REVIEW_COMMANDS) {
+      await githubApi(
+        registryToken,
+        "POST",
+        `/repos/${reviewRepository}/issues/${reviewPull.number}/comments`,
+        { body: command },
+      );
+    }
     await upsertOriginComment(registryToken, metadata, pendingOriginComment(metadata, reviewPull));
     console.log(`Created ${reviewPull.html_url}`);
   } catch (error) {
@@ -762,6 +764,10 @@ function relayItem({ type, body, url, path = null, sourceUrl = null, state = nul
   return { type, body: cleanRelayBody(body), url, path, sourceUrl, state };
 }
 
+export function shouldRelayIssueComment(reviewer) {
+  return reviewer !== "coderabbit";
+}
+
 async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata) {
   const [reviews, inlineComments, issueComments] = await Promise.all([
     paginated(token, `/repos/${reviewRepository}/pulls/${reviewPr}/reviews`),
@@ -773,8 +779,8 @@ async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata
     const reviewer = classifyReviewer(review.user?.login);
     if (!reviewer || !output[reviewer]) continue;
     output[reviewer].push(relayItem({
-      type: "summary",
-      body: review.body || `Review submitted with state ${review.state}.`,
+      type: "status",
+      body: "",
       url: review.html_url,
       state: review.state,
     }));
@@ -792,38 +798,41 @@ async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata
   }
   for (const comment of issueComments) {
     const reviewer = classifyReviewer(comment.user?.login);
-    if (!reviewer || !output[reviewer]) continue;
+    if (!reviewer || !output[reviewer] || !shouldRelayIssueComment(reviewer)) continue;
     output[reviewer].push(relayItem({
-      type: "summary",
-      body: comment.body,
+      type: "status",
+      body: "",
       url: comment.html_url,
     }));
   }
   for (const reviewer of metadata.reviewers) {
+    const completed = output[reviewer].some((item) => item.type === "status");
     const seen = new Set();
-    output[reviewer] = output[reviewer].filter((item) => {
-      const key = `${item.type}\0${item.body}\0${item.path || ""}`;
+    const findings = output[reviewer].filter((item) => item.type === "inline").filter((item) => {
+      const key = `${item.body}\0${item.path || ""}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).sort((left, right) => Number(right.type === "summary") - Number(left.type === "summary"))
-      .slice(0, MAX_RELAY_ITEMS_PER_REVIEWER);
+    }).slice(0, MAX_RELAY_ITEMS_PER_REVIEWER);
+    output[reviewer] = completed ? [{ type: "status" }, ...findings] : findings;
   }
   return output;
 }
 
 function renderReviewerSection(reviewer, items) {
   const label = REVIEWER_LABELS[reviewer] || reviewer;
-  if (!items.length) return `### ${label}\n\nWaiting for this installed reviewer.`;
-  const content = items.map((item, index) => {
-    if (item.type === "inline") {
-      const location = item.sourceUrl
-        ? `[\`${item.path}\`](${item.sourceUrl})`
-        : `\`${item.path || "source"}\``;
-      return `#### Finding ${index + 1} — ${location}\n\n${item.body}\n\n[Open review thread](${item.url})`;
-    }
-    const state = item.state ? ` (${String(item.state).toLowerCase()})` : "";
-    return `<details open><summary>Review output${state}</summary>\n\n${item.body}\n\n[Open original output](${item.url})\n\n</details>`;
+  const findings = items.filter((item) => item.type === "inline");
+  if (!findings.length) {
+    const status = items.some((item) => item.type === "status")
+      ? "No findings reported."
+      : "Pending.";
+    return `### ${label}\n\n${status}`;
+  }
+  const content = findings.map((item, index) => {
+    const location = item.sourceUrl
+      ? `[\`${item.path}\`](${item.sourceUrl})`
+      : `\`${item.path || "source"}\``;
+    return `#### Finding ${index + 1} — ${location}\n\n${item.body}\n\n[Open review thread](${item.url})`;
   }).join("\n\n");
   return `### ${label}\n\n${content}`;
 }
