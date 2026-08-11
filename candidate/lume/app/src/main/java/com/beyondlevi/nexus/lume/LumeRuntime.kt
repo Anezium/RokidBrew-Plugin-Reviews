@@ -111,8 +111,27 @@ class LumeRuntime(private val host: Host, private val store: DocumentStore, priv
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER,
             KeyEvent.KEYCODE_SPACE, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
             -> onSelect()
-            KeyEvent.KEYCODE_BACK -> close()
+            KeyEvent.KEYCODE_BACK -> onBack()
             else -> Unit
+        }
+    }
+
+    private fun onBack() {
+        when (view) {
+            View.READER -> {
+                // BACK inside a book returns to the library, not out of the plugin.
+                playing = false
+                stopTicker()
+                persistProgress()
+                model = null
+                view = View.LIBRARY
+                refreshLibrary()
+                // Force a fresh show: the play surface may have been hidden by the
+                // hub on BACK, so re-adopt the HUD with the library card.
+                shown = false
+                renderLibrary()
+            }
+            View.LIBRARY -> close()
         }
     }
 

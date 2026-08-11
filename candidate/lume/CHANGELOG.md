@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.11
+
+- Phone library now shows with a single document. The settings ScrollView no
+  longer stretches its content to the viewport (kit `fillViewport` default),
+  which — with exactly one library card — inflated the paste card and pushed the
+  library list and uninstall row off-screen. They render at any document count.
+- On the glasses, BACK inside a book returns to the library instead of exiting
+  the plugin (progress is saved first).
+- Updated the bus-client SDK to the latest published line (sdk-v0.14.0).
+
 ## 1.0.10
 
 - Lowered `minSdk` from 31 to 30. The Nexus platform dropped to API 30 for

@@ -15,8 +15,8 @@ android {
         // fails). Per plugins/AGENTS.md / docs/PLUGIN_SDK.md.
         minSdk = 30
         targetSdk = 36
-        versionCode = 11
-        versionName = "1.0.10"
+        versionCode = 12
+        versionName = "1.0.11"
     }
 
     compileOptions {
@@ -27,9 +27,8 @@ android {
 
 dependencies {
     // Rokid Nexus bus-client SDK (published via JitPack). `shared` resolves transitively.
-    // Matches the rokid-inbox-nexus plugin's SDK line (which keeps the HUD awake
-    // on this hub). sdk-v0.2.1 is the JitPack-resolvable build of the 0.2 line.
-    implementation("com.github.Anezium.Rokid-Nexus:bus-client:sdk-v0.2.1")
+    // Rokid Nexus bus-client SDK — latest published line.
+    implementation("com.github.Anezium.Rokid-Nexus:bus-client:sdk-v0.14.0")
     // Library index persistence.
     implementation("com.google.code.gson:gson:2.11.0")
     // On-device PDF text extraction (no network; nothing leaves the phone).
