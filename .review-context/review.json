@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 69,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/69",
+    "title": "Add Tuya Smart Home 1.0.0 (nexus-plugin)",
+    "headSha": "7fcf4cdb3d12947aedd970595a8e208af58fb80e",
+    "baseSha": "9c5550a6b1334f492e4939ef6b614121406f0953"
+  },
+  "descriptorPath": "plugins-nexus/tuya.json",
+  "plugin": {
+    "id": "tuya",
+    "name": "Tuya Smart Home",
+    "version": "1.0.0"
+  },
+  "previous": null,
+  "proposed": {
+    "pluginId": "tuya",
+    "pluginName": "Tuya Smart Home",
+    "version": "1.0.0",
+    "repository": "beyondlevi/rokid-tuya-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/rokid-tuya-nexus",
+    "tag": "tuya-v1.0.0",
+    "commit": "9f0853b66d725293422fb979ce05889dabb06e6c"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-69-tuya-9f0853b66d",
+    "head": "review-head/pr-69-tuya-9f0853b66d"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": "sdk-v0.13.0",
+    "ref": "sdk-v0.13.0",
+    "commit": "cdf46b74449d544a5e06344e56c1f178c8da64ce"
+  }
+}
