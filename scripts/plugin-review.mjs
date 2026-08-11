@@ -23,6 +23,7 @@ export const ORIGIN_COMMENT_MARKER = "<!-- rokidbrew-plugin-source-review -->";
 export const REVIEW_MARKER_PREFIX = "<!-- rokidbrew-plugin-review:v1 ";
 
 const EXPECTED_REVIEWERS = ["codex", "coderabbit", "greptile"];
+const CODERABBIT_REVIEW_COMMAND = "@coderabbitai review";
 const REVIEWER_LABELS = {
   codex: "Codex",
   coderabbit: "CodeRabbit",
@@ -701,6 +702,12 @@ async function prepareReview(options) {
     await githubApi(reviewToken, "POST", `/repos/${reviewRepository}/issues/${reviewPull.number}/labels`, {
       labels: [REVIEW_LABEL],
     });
+    await githubApi(
+      registryToken,
+      "POST",
+      `/repos/${reviewRepository}/issues/${reviewPull.number}/comments`,
+      { body: CODERABBIT_REVIEW_COMMAND },
+    );
     await upsertOriginComment(registryToken, metadata, pendingOriginComment(metadata, reviewPull));
     console.log(`Created ${reviewPull.html_url}`);
   } catch (error) {

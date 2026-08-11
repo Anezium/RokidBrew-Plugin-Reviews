@@ -39,7 +39,10 @@ Grant it these repository permissions:
 
 Save it as the Actions secret `ROKIDBREW_REVIEW_TOKEN` in both repositories.
 The Registry copy dispatches this repository's workflow. The copy here reads
-the Registry PR and updates its source-review comment.
+the Registry PR, explicitly triggers CodeRabbit on the generated review PR, and
+updates the source-review comment. The workflow's scoped `GITHUB_TOKEN` owns the
+generated PR and its disposable branches, so the cross-repository token does
+not need `Contents: write`.
 
 ### 2. Review apps
 
@@ -47,8 +50,9 @@ Install any combination of the following on this repository:
 
 - **Codex**: connect the repository in Codex settings and enable automatic code
   reviews. `AGENTS.md` supplies the Nexus review contract.
-- **CodeRabbit**: install its GitHub App. `.coderabbit.yaml` opts only generated
-  PRs carrying the `plugin-source-review` label into review.
+- **CodeRabbit**: install its GitHub App. `.coderabbit.yaml` scopes reviews to
+  generated PRs carrying the `plugin-source-review` label; the workflow posts
+  the explicit `@coderabbitai review` command after applying that label.
 - **Greptile**: install its GitHub App. `greptile.json` scopes it to the same
   label, points it at the materialized Nexus contracts, and declares
   `Anezium/Rokid-Nexus` as a pattern repository.

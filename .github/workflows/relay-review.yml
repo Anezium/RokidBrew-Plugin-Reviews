@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 5
     concurrency:
       group: relay-plugin-review-${{ github.event.pull_request.number || github.event.issue.number }}
-      cancel-in-progress: true
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
 
