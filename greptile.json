@@ -1,0 +1,47 @@
+{
+  "labels": [
+    "plugin-source-review"
+  ],
+  "commentTypes": [
+    "logic",
+    "syntax"
+  ],
+  "instructions": "Review candidate/** as released Rokid Nexus Android plugin source. Enforce AGENTS.md and the exact contracts in .review-context/nexus. Focus on concrete security, privacy, identity isolation, Android lifecycle, wire protocol, SDK compatibility, and Rokid HUD/input defects. Do not review .review-context itself as a proposed change and avoid style-only comments.",
+  "ignorePatterns": ".review-context/**\n**/*.md",
+  "patternRepositories": [
+    "Anezium/Rokid-Nexus"
+  ],
+  "triggerOnUpdates": false,
+  "shouldUpdateDescription": false,
+  "strictness": 2,
+  "statusCheck": true,
+  "statusCommentsEnabled": true,
+  "includeBranches": [
+    "review-base/**"
+  ],
+  "customContext": {
+    "files": [
+      {
+        "scope": [
+          "candidate/**"
+        ],
+        "path": ".review-context/nexus/plugins/AGENTS.md",
+        "description": "Complete Rokid Nexus plugin contract"
+      },
+      {
+        "scope": [
+          "candidate/**"
+        ],
+        "path": ".review-context/nexus/docs/PLUGIN_SDK.md",
+        "description": "Public typed plugin SDK authority"
+      },
+      {
+        "scope": [
+          "candidate/**"
+        ],
+        "path": ".review-context/nexus/BUSSPEC.md",
+        "description": "Nexus wire-protocol authority"
+      }
+    ]
+  }
+}

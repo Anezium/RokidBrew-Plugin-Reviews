@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "en-US"
+reviews:
+  profile: "assertive"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  auto_review:
+    enabled: false
+    labels:
+      - "plugin-source-review"
+    base_branches:
+      - "review-base/.*"
+    drafts: false
+    auto_incremental_review: false
+  path_filters:
+    - "candidate/**"
+    - "!.review-context/**"
+  path_instructions:
+    - path: "candidate/**"
+      instructions: |
+        Review this as a released Rokid Nexus Android plugin. Enforce AGENTS.md
+        and the exact contracts in .review-context/nexus. Focus on real logic,
+        security, privacy, Android lifecycle, protocol, compatibility, and
+        Rokid HUD/input defects. Do not spend comments on formatting or taste.
+chat:
+  auto_reply: true

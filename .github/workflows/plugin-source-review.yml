@@ -1,0 +1,78 @@
+name: Prepare plugin source review
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Prepare or clean up a source review
+        required: true
+        type: choice
+        options:
+          - prepare
+          - cleanup
+      registry_repository:
+        description: Origin Registry repository
+        required: true
+        type: string
+      registry_pr:
+        description: Origin Registry pull request number
+        required: true
+        type: string
+      registry_head_sha:
+        description: Expected Registry head commit for stale-run protection
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: plugin-source-review-${{ inputs.registry_repository }}-${{ inputs.registry_pr }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Require cross-repository token
+        env:
+          REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+        run: |
+          if [ -z "$REGISTRY_TOKEN" ]; then
+            echo "::error::Add the ROKIDBREW_REVIEW_TOKEN Actions secret to this repository."
+            exit 1
+          fi
+
+      - name: Prepare review
+        if: inputs.operation == 'prepare'
+        env:
+          REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+          REVIEW_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/plugin-review.mjs prepare
+          --registry "${{ inputs.registry_repository }}"
+          --pr "${{ inputs.registry_pr }}"
+          --expected-head "${{ inputs.registry_head_sha }}"
+          --review-repository "${{ github.repository }}"
+
+      - name: Clean up review
+        if: inputs.operation == 'cleanup'
+        env:
+          REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+          REVIEW_TOKEN: ${{ github.token }}
+        run: >-
+          node scripts/plugin-review.mjs cleanup
+          --registry "${{ inputs.registry_repository }}"
+          --pr "${{ inputs.registry_pr }}"
+          --review-repository "${{ github.repository }}"

@@ -1,0 +1,42 @@
+name: Relay plugin review
+
+on:
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  issue_comment:
+    types: [created, edited, deleted]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  relay:
+    if: >-
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request) ||
+      github.event_name == 'pull_request_review' ||
+      github.event_name == 'pull_request_review_comment'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: relay-plugin-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Relay recognized reviewer findings
+        env:
+          REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+          REVIEW_TOKEN: ${{ github.token }}
+          REVIEW_PR: ${{ github.event.pull_request.number || github.event.issue.number }}
+        run: >-
+          node scripts/plugin-review.mjs relay
+          --review-repository "${{ github.repository }}"
+          --review-pr "$REVIEW_PR"
