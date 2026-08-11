@@ -3,7 +3,8 @@
     "plugin-source-review"
   ],
   "includeAuthors": [
-    "github-actions[bot]"
+    "github-actions[bot]",
+    "Anezium"
   ],
   "excludeAuthors": [],
   "commentTypes": [
