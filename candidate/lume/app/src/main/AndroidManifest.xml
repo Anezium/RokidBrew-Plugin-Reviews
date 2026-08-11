@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- No INTERNET: all text extraction is on-device. No POST_NOTIFICATIONS:
+         the plugin session FGS stays invisible; the hub owns the one notification. -->
+
+    <queries>
+        <intent>
+            <action android:name="com.anezium.rokidbus.action.HUB" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Lume">
+
+        <!-- Phone library / settings screen. Exported, NO intent-filter: the hub
+             opens it by explicit component (SETTINGS_ACTIVITY). -->
+        <activity
+            android:name=".LumeSettingsActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- Native Android share target: text or PDF/TXT files from any app.
+             This is a SEND filter (never MAIN/LAUNCHER) so the plugin stays headless. -->
+        <activity
+            android:name=".ShareReceiverActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:label="@string/share_target_label">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
+
+        <!-- The single exported Nexus plugin service (headless). -->
+        <service
+            android:name=".LumePluginService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="glasses-session" />
+            <intent-filter>
+                <action android:name="com.anezium.rokidbus.action.PLUGIN" />
+            </intent-filter>
+            <meta-data android:name="com.anezium.rokidbus.plugin.ID" android:value="lume" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.DISPLAY_NAME" android:value="Lume" />
+            <!-- Declare BOTH: the built-in ICON renders natively on the glasses
+                 launcher (a custom drawable lives in the phone APK and never
+                 reaches the glasses), while ICON_DRAWABLE is the phone-side glyph.
+                 The built-in currently wins everywhere; a later hub release flips
+                 the phone priority so you get the custom glyph on the phone and
+                 the built-in natively on the glasses. -->
+            <meta-data android:name="com.anezium.rokidbus.plugin.ICON" android:value="bookmark" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.ICON_DRAWABLE" android:resource="@drawable/nexus_glyph_lume" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.API_VERSION" android:value="3" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.CAPABILITIES" android:value="surfaces" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.RECEIVE_PREFIXES" android:value="/plugin/lume,/system/plugin" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.SETTINGS_ACTIVITY" android:value=".LumeSettingsActivity" />
+            <meta-data android:name="com.anezium.rokidbus.plugin.LAUNCHABLE" android:value="true" />
+        </service>
+    </application>
+</manifest>

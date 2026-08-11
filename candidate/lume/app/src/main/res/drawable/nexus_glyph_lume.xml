@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lume RSVP glyph: monochrome silhouette (single colour on transparency) so
+     Nexus/the launcher can tint it. Context lines with one emphasised focal
+     line = one word at a time. Feeds the launcher + monochrome app icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:pathData="M34,32 H74"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <path android:pathData="M38,48 H70"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="7"
+        android:strokeLineCap="round" />
+    <path android:pathData="M26,64 H82"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="15"
+        android:strokeLineCap="round" />
+    <path android:pathData="M38,81 H70"
+        android:strokeColor="#FFFFFFFF" android:strokeWidth="7"
+        android:strokeLineCap="round" />
+</vector>
