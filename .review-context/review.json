@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 71,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/71",
+    "title": "lume: bump to v1.0.11 (single-doc library + BACK-to-library fixes)",
+    "headSha": "b89d3827a11ad65b4b01e8d8c25f0f78526a69b6",
+    "baseSha": "75d5ab66b0afe4276b72830f9f05370930b060bc"
+  },
+  "descriptorPath": "plugins-nexus/lume.json",
+  "plugin": {
+    "id": "lume",
+    "name": "Lume",
+    "version": "1.0.11"
+  },
+  "previous": {
+    "pluginId": "lume",
+    "pluginName": "Lume",
+    "version": "1.0.10",
+    "repository": "beyondlevi/lume-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/lume-nexus",
+    "tag": "lume-v1.0.10",
+    "commit": "6d9cefeb460ea92fa70b1cefbc5934ee460e4d01"
+  },
+  "proposed": {
+    "pluginId": "lume",
+    "pluginName": "Lume",
+    "version": "1.0.11",
+    "repository": "beyondlevi/lume-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/lume-nexus",
+    "tag": "lume-v1.0.11",
+    "commit": "512fc08c32fcd4684e51ffcd38a4ab2bb05f4122"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-71-lume-512fc08c32",
+    "head": "review-head/pr-71-lume-512fc08c32"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": "sdk-v0.14.0",
+    "ref": "sdk-v0.14.0",
+    "commit": "0a701a58bf5a13bc391985de01a3b839f842cc2c"
+  }
+}
