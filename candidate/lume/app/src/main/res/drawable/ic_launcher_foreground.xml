@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Feeds both the launcher icon and the monochrome themed icon; inset the
+     plugin's own glyph so the Lume mark shows up everywhere. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/nexus_glyph_lume"
+    android:inset="20%" />
