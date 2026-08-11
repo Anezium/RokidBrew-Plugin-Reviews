@@ -576,16 +576,26 @@ async function deleteReviewBranch(token, repository, branch) {
   }
 }
 
-async function closeGeneratedReviews(token, reviewRepository, registry, prNumber) {
-  const pulls = await matchingReviewPulls(token, reviewRepository, registry, prNumber);
+async function closeGeneratedReviews(reviewToken, branchToken, reviewRepository, registry, prNumber) {
+  const pulls = await matchingReviewPulls(
+    reviewToken,
+    reviewRepository,
+    registry,
+    prNumber,
+    "all",
+  );
+  let closed = 0;
   for (const pull of pulls) {
-    await githubApi(token, "PATCH", `/repos/${reviewRepository}/pulls/${pull.number}`, {
-      state: "closed",
-    });
-    await deleteReviewBranch(token, reviewRepository, pull.head.ref);
-    await deleteReviewBranch(token, reviewRepository, pull.base.ref);
+    if (pull.state === "open") {
+      await githubApi(reviewToken, "PATCH", `/repos/${reviewRepository}/pulls/${pull.number}`, {
+        state: "closed",
+      });
+      closed += 1;
+    }
+    await deleteReviewBranch(branchToken, reviewRepository, pull.head.ref);
+    await deleteReviewBranch(branchToken, reviewRepository, pull.base.ref);
   }
-  return pulls.length;
+  return closed;
 }
 
 async function upsertOriginComment(token, metadata, body) {
@@ -630,8 +640,10 @@ Reviews are advisory; APK provenance, signer, manifest, descriptor, and feed che
 async function prepareReview(options) {
   const registryToken = process.env.REGISTRY_TOKEN;
   const reviewToken = process.env.REVIEW_TOKEN;
+  const reviewBranchToken = process.env.REVIEW_BRANCH_TOKEN;
   if (!registryToken) fail("REGISTRY_TOKEN is required");
   if (!reviewToken) fail("REVIEW_TOKEN is required");
+  if (!reviewBranchToken) fail("REVIEW_BRANCH_TOKEN is required");
   const metadata = await resolveSubmission({
     registry: options.registry,
     prNumber: options.pr,
@@ -641,7 +653,13 @@ async function prepareReview(options) {
   const reviewRepository = parseRepositorySlug(options["review-repository"]);
   metadata.reviewRepository = reviewRepository;
   metadata.branches = reviewBranches(metadata);
-  await closeGeneratedReviews(reviewToken, reviewRepository, metadata.origin.repository, metadata.origin.prNumber);
+  await closeGeneratedReviews(
+    reviewToken,
+    reviewBranchToken,
+    reviewRepository,
+    metadata.origin.repository,
+    metadata.origin.prNumber,
+  );
 
   const temporaryRoot = mkdtempSync(join(tmpdir(), "rokidbrew-plugin-review-"));
   const worktree = join(temporaryRoot, "review-worktree");
@@ -709,8 +727,12 @@ async function prepareReview(options) {
         state: "closed",
       }).catch(() => {});
     }
-    if (headPushed) await deleteReviewBranch(reviewToken, reviewRepository, metadata.branches.head);
-    if (basePushed) await deleteReviewBranch(reviewToken, reviewRepository, metadata.branches.base);
+    if (headPushed) {
+      await deleteReviewBranch(reviewBranchToken, reviewRepository, metadata.branches.head);
+    }
+    if (basePushed) {
+      await deleteReviewBranch(reviewBranchToken, reviewRepository, metadata.branches.base);
+    }
     throw error;
   } finally {
     if (existsSync(worktree)) {
@@ -888,10 +910,13 @@ async function relayReview(options) {
 
 async function cleanupReview(options) {
   const reviewToken = process.env.REVIEW_TOKEN;
+  const reviewBranchToken = process.env.REVIEW_BRANCH_TOKEN;
   if (!reviewToken) fail("REVIEW_TOKEN is required");
+  if (!reviewBranchToken) fail("REVIEW_BRANCH_TOKEN is required");
   const reviewRepository = parseRepositorySlug(options["review-repository"]);
   const count = await closeGeneratedReviews(
     reviewToken,
+    reviewBranchToken,
     reviewRepository,
     parseRepositorySlug(options.registry),
     options.pr,

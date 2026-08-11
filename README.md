@@ -39,7 +39,10 @@ Grant it these repository permissions:
 
 Save it as the Actions secret `ROKIDBREW_REVIEW_TOKEN` in both repositories.
 The Registry copy dispatches this repository's workflow. The copy here reads
-the Registry PR and updates its source-review comment.
+the Registry PR, creates the review PR as the maintainer, and updates the
+source-review comment. The workflow's scoped `GITHUB_TOKEN` creates and deletes
+the disposable review branches, so the cross-repository token does not need
+`Contents: write`.
 
 ### 2. Review apps
 

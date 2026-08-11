@@ -59,6 +59,7 @@ jobs:
         env:
           REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
           REVIEW_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+          REVIEW_BRANCH_TOKEN: ${{ github.token }}
         run: >-
           node scripts/plugin-review.mjs prepare
           --registry "${{ inputs.registry_repository }}"
@@ -71,6 +72,7 @@ jobs:
         env:
           REGISTRY_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
           REVIEW_TOKEN: ${{ secrets.ROKIDBREW_REVIEW_TOKEN }}
+          REVIEW_BRANCH_TOKEN: ${{ github.token }}
         run: >-
           node scripts/plugin-review.mjs cleanup
           --registry "${{ inputs.registry_repository }}"
