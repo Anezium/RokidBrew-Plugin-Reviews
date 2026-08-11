@@ -99,7 +99,11 @@ class LumeSettingsActivity : Activity() {
                 NexusUi.block(),
             )
             addView(
-                NexusUi.screen(ctx, content),
+                // fillViewport (the kit default) stretches the content to the viewport
+                // when it is shorter than the screen, which — with a single library
+                // card — inflates the paste card and pushes the library + uninstall
+                // off-screen. Natural height scrolls when taller and never stretches.
+                NexusUi.screen(ctx, content).apply { isFillViewport = false },
                 LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
             )
         }
