@@ -779,8 +779,8 @@ async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata
     const reviewer = classifyReviewer(review.user?.login);
     if (!reviewer || !output[reviewer]) continue;
     output[reviewer].push(relayItem({
-      type: "summary",
-      body: review.body || `Review submitted with state ${review.state}.`,
+      type: "status",
+      body: "",
       url: review.html_url,
       state: review.state,
     }));
@@ -800,36 +800,39 @@ async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata
     const reviewer = classifyReviewer(comment.user?.login);
     if (!reviewer || !output[reviewer] || !shouldRelayIssueComment(reviewer)) continue;
     output[reviewer].push(relayItem({
-      type: "summary",
-      body: comment.body,
+      type: "status",
+      body: "",
       url: comment.html_url,
     }));
   }
   for (const reviewer of metadata.reviewers) {
+    const completed = output[reviewer].some((item) => item.type === "status");
     const seen = new Set();
-    output[reviewer] = output[reviewer].filter((item) => {
-      const key = `${item.type}\0${item.body}\0${item.path || ""}`;
+    const findings = output[reviewer].filter((item) => item.type === "inline").filter((item) => {
+      const key = `${item.body}\0${item.path || ""}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    }).sort((left, right) => Number(right.type === "summary") - Number(left.type === "summary"))
-      .slice(0, MAX_RELAY_ITEMS_PER_REVIEWER);
+    }).slice(0, MAX_RELAY_ITEMS_PER_REVIEWER);
+    output[reviewer] = completed ? [{ type: "status" }, ...findings] : findings;
   }
   return output;
 }
 
 function renderReviewerSection(reviewer, items) {
   const label = REVIEWER_LABELS[reviewer] || reviewer;
-  if (!items.length) return `### ${label}\n\nWaiting for this installed reviewer.`;
-  const content = items.map((item, index) => {
-    if (item.type === "inline") {
-      const location = item.sourceUrl
-        ? `[\`${item.path}\`](${item.sourceUrl})`
-        : `\`${item.path || "source"}\``;
-      return `#### Finding ${index + 1} — ${location}\n\n${item.body}\n\n[Open review thread](${item.url})`;
-    }
-    const state = item.state ? ` (${String(item.state).toLowerCase()})` : "";
-    return `<details open><summary>Review output${state}</summary>\n\n${item.body}\n\n[Open original output](${item.url})\n\n</details>`;
+  const findings = items.filter((item) => item.type === "inline");
+  if (!findings.length) {
+    const status = items.some((item) => item.type === "status")
+      ? "No findings reported."
+      : "Pending.";
+    return `### ${label}\n\n${status}`;
+  }
+  const content = findings.map((item, index) => {
+    const location = item.sourceUrl
+      ? `[\`${item.path}\`](${item.sourceUrl})`
+      : `\`${item.path || "source"}\``;
+    return `#### Finding ${index + 1} — ${location}\n\n${item.body}\n\n[Open review thread](${item.url})`;
   }).join("\n\n");
   return `### ${label}\n\n${content}`;
 }

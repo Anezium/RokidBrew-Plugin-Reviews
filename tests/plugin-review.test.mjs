@@ -212,7 +212,7 @@ test("renders all reviewer states into one idempotent Registry comment", () => {
       }],
       coderabbit: [],
       greptile: [{
-        type: "summary",
+        type: "status",
         body: "No blocking issue found.",
         state: "APPROVED",
         url: "https://github.com/Anezium/RokidBrew-Plugin-Reviews/pull/1#pullrequestreview-1",
@@ -221,7 +221,9 @@ test("renders all reviewer states into one idempotent Registry comment", () => {
   );
   assert.ok(body.startsWith(ORIGIN_COMMENT_MARKER));
   assert.match(body, /This owner check is missing/);
-  assert.match(body, /CodeRabbit[\s\S]*Waiting/);
-  assert.match(body, /No blocking issue found/);
+  assert.match(body, /CodeRabbit[\s\S]*Pending/);
+  assert.match(body, /Greptile[\s\S]*No findings reported/);
+  assert.doesNotMatch(body, /No blocking issue found/);
+  assert.doesNotMatch(body, /Review output/);
   assert.match(body, /provenance, signer, manifest, descriptor, and feed/);
 });

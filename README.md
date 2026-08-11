@@ -98,7 +98,9 @@ low.
   excluded.
 - Relay events are accepted only from open generated PRs and recognized Codex,
   CodeRabbit, or Greptile accounts. Stale reviews cannot overwrite a newer
-  Registry revision. CodeRabbit status and quota comments stay on the disposable
-  review PR; only its submitted reviews and inline findings are relayed.
+  Registry revision. Reviewer summaries, boilerplate, progress, and quota
+  comments stay on the disposable review PR; only inline findings are relayed.
+  A completed reviewer with no inline findings is shown as `No findings
+  reported`.
 - A relayed AI review is advisory. APK provenance, signer, manifest, descriptor,
   and generated-feed checks remain mandatory merge gates in Registry.
