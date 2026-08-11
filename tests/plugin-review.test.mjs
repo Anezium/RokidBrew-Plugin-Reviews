@@ -15,6 +15,7 @@ import {
   parseReleaseAssetUrl,
   parseRepositorySlug,
   renderRelayedComment,
+  shouldRelayIssueComment,
   sourceLineUrl,
 } from "../scripts/plugin-review.mjs";
 
@@ -123,6 +124,12 @@ test("recognizes only supported review services", () => {
   assert.equal(classifyReviewer("chatgpt-codex-connector[bot]"), "codex");
   assert.equal(classifyReviewer("github-actions[bot]"), null);
   assert.equal(classifyReviewer("random-reviewer"), null);
+});
+
+test("keeps CodeRabbit operational comments out of Registry reviews", () => {
+  assert.equal(shouldRelayIssueComment("coderabbit"), false);
+  assert.equal(shouldRelayIssueComment("codex"), true);
+  assert.equal(shouldRelayIssueComment("greptile"), true);
 });
 
 test("maps inline comments to immutable proposed and previous source links", () => {

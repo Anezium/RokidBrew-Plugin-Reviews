@@ -23,7 +23,7 @@ export const ORIGIN_COMMENT_MARKER = "<!-- rokidbrew-plugin-source-review -->";
 export const REVIEW_MARKER_PREFIX = "<!-- rokidbrew-plugin-review:v1 ";
 
 const EXPECTED_REVIEWERS = ["codex", "coderabbit", "greptile"];
-const CODERABBIT_REVIEW_COMMAND = "@coderabbitai review";
+const REVIEW_COMMANDS = ["@codex review", "@coderabbitai review", "@greptileai"];
 const REVIEWER_LABELS = {
   codex: "Codex",
   coderabbit: "CodeRabbit",
@@ -702,12 +702,14 @@ async function prepareReview(options) {
     await githubApi(reviewToken, "POST", `/repos/${reviewRepository}/issues/${reviewPull.number}/labels`, {
       labels: [REVIEW_LABEL],
     });
-    await githubApi(
-      registryToken,
-      "POST",
-      `/repos/${reviewRepository}/issues/${reviewPull.number}/comments`,
-      { body: CODERABBIT_REVIEW_COMMAND },
-    );
+    for (const command of REVIEW_COMMANDS) {
+      await githubApi(
+        registryToken,
+        "POST",
+        `/repos/${reviewRepository}/issues/${reviewPull.number}/comments`,
+        { body: command },
+      );
+    }
     await upsertOriginComment(registryToken, metadata, pendingOriginComment(metadata, reviewPull));
     console.log(`Created ${reviewPull.html_url}`);
   } catch (error) {
@@ -762,6 +764,10 @@ function relayItem({ type, body, url, path = null, sourceUrl = null, state = nul
   return { type, body: cleanRelayBody(body), url, path, sourceUrl, state };
 }
 
+export function shouldRelayIssueComment(reviewer) {
+  return reviewer !== "coderabbit";
+}
+
 async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata) {
   const [reviews, inlineComments, issueComments] = await Promise.all([
     paginated(token, `/repos/${reviewRepository}/pulls/${reviewPr}/reviews`),
@@ -792,7 +798,7 @@ async function collectReviewerOutput(token, reviewRepository, reviewPr, metadata
   }
   for (const comment of issueComments) {
     const reviewer = classifyReviewer(comment.user?.login);
-    if (!reviewer || !output[reviewer]) continue;
+    if (!reviewer || !output[reviewer] || !shouldRelayIssueComment(reviewer)) continue;
     output[reviewer].push(relayItem({
       type: "summary",
       body: comment.body,
