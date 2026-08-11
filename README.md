@@ -33,7 +33,7 @@ Create one fine-grained personal access token restricted to these repositories:
 Grant it these repository permissions:
 
 - Actions: read and write
-- Contents: read and write
+- Contents: read
 - Issues: read and write
 - Pull requests: read and write
 
