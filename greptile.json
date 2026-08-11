@@ -2,6 +2,10 @@
   "labels": [
     "plugin-source-review"
   ],
+  "includeAuthors": [
+    "Anezium"
+  ],
+  "excludeAuthors": [],
   "commentTypes": [
     "logic",
     "syntax"
