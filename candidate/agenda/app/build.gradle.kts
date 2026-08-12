@@ -15,8 +15,8 @@ android {
         // cannot be parsed on an API 30 phone and the Store install fails there.
         minSdk = 30
         targetSdk = 36
-        versionCode = 12
-        versionName = "1.0.1"
+        versionCode = 14
+        versionName = "1.1.1"
     }
 
     compileOptions {
@@ -30,6 +30,6 @@ android {
 }
 
 dependencies {
-    implementation("com.github.Anezium.Rokid-Nexus:bus-client:sdk-v0.13.0")
+    implementation("com.github.Anezium.Rokid-Nexus:bus-client:sdk-v0.15.0")
     testImplementation("junit:junit:4.13.2")
 }

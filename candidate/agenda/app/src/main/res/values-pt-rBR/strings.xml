@@ -31,6 +31,8 @@
     <string name="hud_page_of">página %1$d/%2$d</string>
     <string name="hud_page_footer">gire para virar · voltar</string>
     <string name="hud_position_footer">%1$d/%2$d · voltar</string>
+    <string name="hud_reader_footer">role para ler · voltar</string>
+    <string name="hud_reader_truncated">… o resto não caberia</string>
     <string name="hud_more">+%1$d</string>
 
     <string name="settings_subtitle">Seu calendário nos óculos</string>

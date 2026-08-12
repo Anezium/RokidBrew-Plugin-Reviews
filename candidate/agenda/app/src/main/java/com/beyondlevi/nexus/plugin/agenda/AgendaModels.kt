@@ -37,6 +37,19 @@ data class AgendaAttendee(
     val self: Boolean,
 )
 
+/** Kind of a reader segment. Mirrors NexusReaderSegmentKind, SDK-free. */
+enum class AgendaSegmentKind { HEADER, PROSE, ASIDE }
+
+/**
+ * One segment of a reader document. The glasses renderer wraps and scrolls
+ * these itself — there is no three-line clamp and no paging to compute, which
+ * is the whole reason the notes view stopped being a card.
+ */
+data class AgendaSegment(
+    val kind: AgendaSegmentKind,
+    val text: String,
+)
+
 /** HUD row weight. Mirrors NexusRowTone without dragging the SDK into unit tests. */
 enum class AgendaTone { ALERT, NORMAL, DIM, BODY }
 
@@ -91,5 +104,7 @@ data class AgendaLabels(
     val rsvpPending: String = "-",
     val pageOf: String = "page %1\$d/%2\$d",
     val pageFooter: String = "swipe to turn - back",
+    val readerFooter: String = "scroll to read - back",
+    val readerTruncated: String = "... the rest did not fit",
     val listOfFooter: String = "%1\$d/%2\$d - back",
 )

@@ -20,8 +20,10 @@ surfaces and closes it again. Nothing is installed on the glasses.
   - **Participants** — "16 people - Ana, Bruno, ..." opens the full guest
     list: one row per person, organiser first, RSVP on the right, declined guests
     dimmed. Invitations that carry only an address get a readable name.
-  - **Notes** — opens the whole description as a paged reader (`page 1/3`), with
-    the calendar's HTML stripped.
+  - **Notes** — opens the whole description as a native **reader surface**: no
+    three-line clamp, no pages, up to 40,000 characters, with the calendar's HTML
+    and decorative rules stripped. The glasses own the wrapping and the
+    scrolling; the document opens at its first line (`anchor = TOP`).
 
   The row in focus carries a `›` mark and the footer names what a tap opens
   (`tap to open: Participants`) — a prose row gets no selection rail from the
@@ -37,7 +39,7 @@ SELECT = `DPAD_CENTER`/`ENTER`, BACK = `KEYCODE_BACK`.
 
 | Verb | List | Detail | Participants | Notes |
 |---|---|---|---|---|
-| NEXT / PREV | walk the events | walk the openable rows (or the events, when the detail opens nothing) | walk the guests | turn the page |
+| NEXT / PREV | walk the events | walk the openable rows (or the events, when the detail opens nothing) | walk the guests | scroll (consumed by the hub, never reaches the plugin) |
 | SELECT | open the detail | open that row's page | — | — |
 | BACK | close the plugin | back to the list | back to the detail | back to the detail |
 
@@ -66,14 +68,23 @@ and which calendars to include.
   a list-row title is one line and is ellipsised, never wrapped.
 - Prose rows are cut by the **wrapped lines the HUD draws** (3 lines of ~29
   columns), modelling where the line breaker cuts a long token — a row measured
-  in characters loses its tail silently.
+  in characters loses its tail silently. This applies to the one-row previews;
+  the full description goes out as a reader, which has no clamp at all.
+- A reader document is budgeted in **serialized bytes**, against the two ceilings
+  the platform measures: the SDK rejects a payload past **64 KiB**
+  (`INVALID_PAYLOAD`) whatever the transport, and a control-channel-only link
+  carries ~3 KiB. Characters are not a proxy for either — 40,000 characters is
+  inside the model's cap and ~120 KB of CJK. The title/subtitle/footer/contentKey
+  are weighed before the segments get their share, JSON escaping is counted, and
+  a document that had to be cut delivers its beginning plus a closing note.
 - `contentKey` is keyed on view identity, never built from content (128-char cap).
 - The surface is refreshed once a minute while open, and only while open: the
   process is dormant outside `PLUGIN_OPEN` → `PLUGIN_CLOSE`.
 
 ## Build
 
-JDK 17 + Android SDK 36 (see the Nexus `nexus-build-and-deploy` recipe).
+JDK 17 + Android SDK 36 (see the Nexus `nexus-build-and-deploy` recipe). Needs
+bus-client `sdk-v0.15.0` and glasses hub **1.4.3+** (the reader's `TOP` anchor).
 
 ```bash
 sh ./gradlew :app:testDebugUnitTest   # the R08 + formatter contract

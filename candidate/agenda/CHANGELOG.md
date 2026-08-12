@@ -1,5 +1,42 @@
 # Changelog
 
+## 1.1.1 — 2026-08-12
+
+Bounded the reader by the two ceilings the platform actually measures, after the
+Store's source review raised the same class of finding on another plugin's reader
+port.
+
+- **The document is budgeted in serialized bytes, in both transport modes.** It
+  used to count characters only, and drop the budget entirely once the SPP data
+  plane was up — but SPP does not relax the SDK's **64 KiB payload ceiling**:
+  40,000 characters is inside the model's character cap and up to ~80 KB of
+  accented pt-BR or CJK text, so `showReader` answered `INVALID_PAYLOAD` and the
+  wearer simply stayed on the previous screen. JSON escaping is counted too.
+- **The shell is measured, not assumed.** Title, subtitle, footer and contentKey
+  are weighed in UTF-8 before the segments get their budget, so a long accented
+  subtitle shrinks the document instead of overflowing the link.
+- **A document that had to be cut always delivers its beginning.** A paragraph
+  that does not fit now contributes its longest fitting prefix (backed off to a
+  word boundary) plus the closing notice, instead of the notice alone.
+- A segment slot, its characters and its bytes stay reserved for that notice, so
+  a description with more than 240 paragraphs cannot silently lose its marker.
+
+## 1.1.0 — 2026-08-12
+
+- **The description is a real document now.** Notes used to be a card the plugin
+  paged by hand: three wrapped lines per row, four rows per page, and every page
+  break computed against measured HUD geometry. It is now a native **reader
+  surface** — the glasses own the wrapping and the scrolling, there is no line
+  clamp, and up to 40,000 characters of invitation text arrive whole. Long
+  paragraphs are no longer cut into blocks; a paragraph is a paragraph.
+- The reader opens at the **first** line (`anchor = TOP`, glasses hub 1.4.3+),
+  which is what a document wants — a chat wants the last line, a meeting
+  description does not.
+- Scrolling is renderer-owned: the ring's forward/back are consumed by the hub
+  inside the reader and never reach the plugin, so the notes view no longer
+  carries a page cursor at all. A tap or a double tap still return here.
+- Built against bus-client `sdk-v0.15.0`.
+
 ## 1.0.1 — 2026-08-07
 
 - **Language is now explicit and switchable.** The plugin always shipped English

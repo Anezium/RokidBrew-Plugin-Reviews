@@ -16,13 +16,13 @@ class AgendaStateTest {
     private fun stateInDetail(
         events: Int = 3,
         participants: Int = 4,
-        notesPages: Int = 3,
+        notes: Boolean = true,
     ) = stateWith(events).apply {
         select()
         setDetailContent(
             targets = listOf(AgendaDetailTarget.PARTICIPANTS, AgendaDetailTarget.NOTES),
             participantCount = participants,
-            notesPageCount = notesPages,
+            notesAvailable = notes,
         )
     }
 
@@ -62,7 +62,7 @@ class AgendaStateTest {
     fun `the axis still walks events while a detail with nothing to open is up`() {
         val state = stateWith(3)
         state.select()
-        state.setDetailContent(emptyList(), participantCount = 0, notesPageCount = 0)
+        state.setDetailContent(emptyList(), participantCount = 0, notesAvailable = false)
         state.move(1)
         assertEquals(AgendaView.DETAIL, state.view)
         assertEquals(1, state.selectedIndex)
@@ -100,17 +100,16 @@ class AgendaStateTest {
     }
 
     @Test
-    fun `tapping the notes row opens the description and the axis turns pages`() {
+    fun `tapping the notes row opens the reader and back returns`() {
         val state = stateInDetail()
         state.move(1)
         state.select()
         assertEquals(AgendaView.NOTES, state.view)
-        assertEquals(0, state.notesPage)
-        state.move(1)
-        assertEquals(1, state.notesPage)
-        state.move(-1)
-        state.move(-1)
-        assertEquals(2, state.notesPage)
+        // Scrolling belongs to the glasses renderer, which never forwards the
+        // directional keys — so the axis is deliberately inert here.
+        assertEquals(AgendaState.Effect.NONE, state.move(1))
+        assertEquals(AgendaState.Effect.NONE, state.move(-1))
+        assertEquals(AgendaView.NOTES, state.view)
         state.back()
         assertEquals(AgendaView.DETAIL, state.view)
         assertEquals(AgendaDetailTarget.NOTES, state.focusedTarget)
@@ -129,13 +128,19 @@ class AgendaStateTest {
     }
 
     @Test
-    fun `a single-page description does not pretend to turn`() {
-        val state = stateInDetail(notesPages = 1)
-        state.move(1)
+    fun `an event with no description cannot open the reader`() {
+        val state = stateWith(3)
         state.select()
-        assertEquals(AgendaView.NOTES, state.view)
-        assertEquals(AgendaState.Effect.NONE, state.move(1))
-        assertEquals(0, state.notesPage)
+        state.setDetailContent(
+            targets = listOf(AgendaDetailTarget.PARTICIPANTS),
+            participantCount = 4,
+            notesAvailable = false,
+        )
+        assertEquals(AgendaDetailTarget.PARTICIPANTS, state.focusedTarget)
+        // The only openable row is the guest list; notes is not offered at all.
+        assertEquals(listOf(AgendaDetailTarget.PARTICIPANTS), state.detailTargets)
+        state.select()
+        assertEquals(AgendaView.PARTICIPANTS, state.view)
     }
 
     @Test
@@ -144,14 +149,14 @@ class AgendaStateTest {
         state.select()
         // First render: the guest list has not come back from the provider yet,
         // so notes is the only row and the cursor sits on it by default.
-        state.setDetailContent(listOf(AgendaDetailTarget.NOTES), 0, 2)
+        state.setDetailContent(listOf(AgendaDetailTarget.NOTES), 0, true)
         assertEquals(AgendaDetailTarget.NOTES, state.focusedTarget)
         // It arrives and inserts a row above. The wearer never chose anything, so
         // a tap must land on the first row, not on whatever existed first.
         state.setDetailContent(
             listOf(AgendaDetailTarget.PARTICIPANTS, AgendaDetailTarget.NOTES),
             participantCount = 5,
-            notesPageCount = 2,
+            notesAvailable = true,
         )
         assertEquals(AgendaDetailTarget.PARTICIPANTS, state.focusedTarget)
     }
@@ -165,7 +170,7 @@ class AgendaStateTest {
         state.setDetailContent(
             listOf(AgendaDetailTarget.PARTICIPANTS, AgendaDetailTarget.NOTES),
             participantCount = 9,
-            notesPageCount = 3,
+            notesAvailable = true,
         )
         assertEquals(AgendaDetailTarget.NOTES, state.focusedTarget)
     }
@@ -175,7 +180,7 @@ class AgendaStateTest {
         val state = stateInDetail()
         state.select()
         assertEquals(AgendaView.PARTICIPANTS, state.view)
-        state.setDetailContent(listOf(AgendaDetailTarget.NOTES), participantCount = 0, notesPageCount = 3)
+        state.setDetailContent(listOf(AgendaDetailTarget.NOTES), participantCount = 0, notesAvailable = true)
         assertEquals(AgendaView.DETAIL, state.view)
     }
 
@@ -189,7 +194,6 @@ class AgendaStateTest {
         state.select()
         assertEquals(1, state.selectedIndex)
         assertEquals(0, state.detailIndex)
-        assertEquals(0, state.notesPage)
     }
 
     @Test

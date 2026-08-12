@@ -17,7 +17,8 @@ enum class AgendaDetailTarget { PARTICIPANTS, NOTES }
  *    with nothing to open has no cursor, so the axis keeps walking the events —
  *    the wearer is never left with a verb that does nothing;
  *  - PARTICIPANTS: walk the attendees (the hub windows the list to the cursor);
- *  - NOTES: turn the page.
+ *  - NOTES: nothing — a reader surface scrolls in the glasses renderer, which
+ *    swallows the directional keys before they reach the plugin.
  */
 class AgendaState {
 
@@ -46,10 +47,12 @@ class AgendaState {
     var participantCount: Int = 0
         private set
 
-    var notesPage: Int = 0
-        private set
-
-    var notesPageCount: Int = 0
+    /**
+     * Whether the open event has a description to read. There is no page count
+     * any more: the notes view is a reader surface, and scrolling belongs to the
+     * glasses renderer — directional keys never reach [onNexusInput] there.
+     */
+    var notesAvailable: Boolean = false
         private set
 
     /**
@@ -84,7 +87,7 @@ class AgendaState {
     fun setDetailContent(
         targets: List<AgendaDetailTarget>,
         participantCount: Int,
-        notesPageCount: Int,
+        notesAvailable: Boolean,
     ) {
         val focused = focusedTarget
         detailTargets = targets
@@ -94,12 +97,11 @@ class AgendaState {
             0
         }
         this.participantCount = participantCount.coerceAtLeast(0)
-        this.notesPageCount = notesPageCount.coerceAtLeast(0)
+        this.notesAvailable = notesAvailable
         participantIndex = participantIndex.coerceIn(0, (this.participantCount - 1).coerceAtLeast(0))
-        notesPage = notesPage.coerceIn(0, (this.notesPageCount - 1).coerceAtLeast(0))
         // A page that vanished under the wearer sends them back to where it lived.
         if (view == AgendaView.PARTICIPANTS && this.participantCount == 0) view = AgendaView.DETAIL
-        if (view == AgendaView.NOTES && this.notesPageCount == 0) view = AgendaView.DETAIL
+        if (view == AgendaView.NOTES && !notesAvailable) view = AgendaView.DETAIL
     }
 
     /** NEXT (+1) / PREV (-1). Wraps, so the axis never dead-ends. */
@@ -118,12 +120,9 @@ class AgendaState {
             participantIndex = Math.floorMod(participantIndex + delta, participantCount)
             Effect.RENDER
         }
-        AgendaView.NOTES -> if (notesPageCount <= 1) {
-            Effect.NONE
-        } else {
-            notesPage = Math.floorMod(notesPage + delta, notesPageCount)
-            Effect.RENDER
-        }
+        // The reader scrolls itself: the hub consumes the directional keys and
+        // never forwards them here, so this branch only exists for completeness.
+        AgendaView.NOTES -> Effect.NONE
     }
 
     private fun moveEvent(delta: Int): Effect {
@@ -133,7 +132,6 @@ class AgendaState {
         detailIndex = 0
         detailCursorMoved = false
         participantIndex = 0
-        notesPage = 0
         return Effect.RENDER
     }
 
@@ -155,8 +153,7 @@ class AgendaState {
                     Effect.RENDER
                 }
                 AgendaDetailTarget.NOTES -> {
-                    if (notesPageCount == 0) return Effect.NONE
-                    notesPage = 0
+                    if (!notesAvailable) return Effect.NONE
                     view = AgendaView.NOTES
                     Effect.RENDER
                 }
@@ -193,7 +190,6 @@ class AgendaState {
         detailCursorMoved = false
         participantIndex = 0
         participantCount = 0
-        notesPage = 0
-        notesPageCount = 0
+        notesAvailable = false
     }
 }

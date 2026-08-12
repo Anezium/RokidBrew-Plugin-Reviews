@@ -6,6 +6,10 @@ import android.view.KeyEvent
 import com.anezium.rokidbus.client.plugin.NexusCard
 import com.anezium.rokidbus.client.plugin.NexusCardLine
 import com.anezium.rokidbus.client.plugin.NexusPluginService
+import com.anezium.rokidbus.client.plugin.NexusReader
+import com.anezium.rokidbus.client.plugin.NexusReaderAnchor
+import com.anezium.rokidbus.client.plugin.NexusReaderSegment
+import com.anezium.rokidbus.client.plugin.NexusReaderSegmentKind
 import com.anezium.rokidbus.client.plugin.NexusRowTone
 import com.anezium.rokidbus.client.plugin.NexusSurfaceSession
 import com.anezium.rokidbus.shared.plugin.NexusInputEvent
@@ -89,6 +93,8 @@ class AgendaPluginService : NexusPluginService() {
             pageOf = getString(R.string.hud_page_of),
             pageFooter = getString(R.string.hud_page_footer),
             listOfFooter = getString(R.string.hud_position_footer),
+            readerFooter = getString(R.string.hud_reader_footer),
+            readerTruncated = getString(R.string.hud_reader_truncated),
         )
     }
 
@@ -179,6 +185,15 @@ class AgendaPluginService : NexusPluginService() {
 
     private fun render() {
         val session = surface ?: return
+        // The notes view is a reader surface, not a card: it leaves the card path
+        // entirely, and the hub handles the kind change on the same surface id.
+        if (state.view == AgendaView.NOTES) {
+            val reader = notesReader()
+            if (reader != null) {
+                if (shown) session.updateReader(reader) else session.showReader(reader).also { shown = true }
+                return
+            }
+        }
         val card = when {
             !accessGranted -> messageCard(labels.noAccess, labels.noAccessHint, "agenda-no-access")
             events.isEmpty() && !shown -> messageCard(labels.loading, null, "agenda-loading")
@@ -189,7 +204,6 @@ class AgendaPluginService : NexusPluginService() {
             )
             state.view == AgendaView.DETAIL -> detailCard()
             state.view == AgendaView.PARTICIPANTS -> participantsCard()
-            state.view == AgendaView.NOTES -> notesCard()
             else -> listCard()
         }
         if (shown) session.updateCard(card) else session.showCard(card).also { shown = true }
@@ -234,7 +248,7 @@ class AgendaPluginService : NexusPluginService() {
         state.setDetailContent(
             targets = rows.mapNotNull { it.target },
             participantCount = attendees.size,
-            notesPageCount = AgendaFormatter.notesPages(event.description).size,
+            notesAvailable = AgendaFormatter.readerSegments(event.description, labels).isNotEmpty(),
         )
         return NexusCard(
             title = event.title.ifBlank { labels.title }.take(MAX_TITLE),
@@ -282,27 +296,52 @@ class AgendaPluginService : NexusPluginService() {
         )
     }
 
-    /** The whole description, one page of prose rows at a time. */
-    private fun notesCard(): NexusCard {
-        val event = events.getOrNull(state.selectedIndex) ?: return listCard()
-        val pages = AgendaFormatter.notesPages(event.description)
-        if (pages.isEmpty()) return detailCard()
-        val pageIndex = state.notesPage.coerceIn(0, pages.lastIndex)
-        return NexusCard(
-            title = labels.notes,
-            lines = emptyList(),
-            subtitle = event.title.ifBlank { labels.title }.take(MAX_SUBTITLE),
-            footer = if (pages.size <= 1) {
-                labels.detailFooter
-            } else {
-                String.format(Locale.ROOT, labels.pageOf, pageIndex + 1, pages.size) +
-                    " - " + labels.pageFooter
-            },
-            contentKey = contentKey("notes-$pageIndex", state.selectedIndex, pages.size),
+    /**
+     * The whole description as a native reader document.
+     *
+     * This is what replaced a hand-paged card: no three-line clamp, no page
+     * arithmetic, up to 40,000 characters, and the glasses own the scrolling.
+     * `anchor = TOP` is the difference between an article and a chat — a
+     * description opens at its first line instead of its last, and an update
+     * leaves the wearer where they were reading (glasses hub 1.4.3+).
+     */
+    private fun notesReader(): NexusReader? {
+        val event = events.getOrNull(state.selectedIndex) ?: return null
+        val title = labels.notes
+        val subtitle = event.title.ifBlank { labels.title }.take(MAX_SUBTITLE)
+        val footer = labels.readerFooter
+        val key = contentKey("notes", state.selectedIndex, 0)
+        // The shell is MEASURED, not assumed: an accented or CJK subtitle costs
+        // up to three bytes per character, and the byte ceilings below are what
+        // the SDK preflight and the transport actually check.
+        val shellBytes = listOf(title, subtitle, footer, key)
+            .sumOf { AgendaFormatter.segmentByteCost(it) }
+        // `supportsImageSurface` is the SDK's honest signal that the SPP binary
+        // plane is up. It does NOT relax the 64 KiB payload ceiling — it only
+        // decides whether the ~3 KiB control-channel budget applies.
+        val budget = AgendaFormatter.readerBudget(
+            shellBytes = shellBytes,
+            dataPlaneUp = nexusClient?.supportsImageSurface == true,
+        )
+        val segments = AgendaFormatter.readerSegments(event.description, labels, budget)
+        if (segments.isEmpty()) return null
+        return NexusReader(
+            title = title,
+            subtitle = subtitle,
+            footer = footer,
+            contentKey = key,
             handlesBack = true,
-            richLines = AgendaFormatter.notesRows(pages[pageIndex]).map {
-                it.toCardLine(selected = false)
+            segments = segments.map {
+                NexusReaderSegment(
+                    kind = when (it.kind) {
+                        AgendaSegmentKind.HEADER -> NexusReaderSegmentKind.HEADER
+                        AgendaSegmentKind.PROSE -> NexusReaderSegmentKind.PROSE
+                        AgendaSegmentKind.ASIDE -> NexusReaderSegmentKind.ASIDE
+                    },
+                    text = it.text,
+                )
             },
+            anchor = NexusReaderAnchor.TOP,
         )
     }
 

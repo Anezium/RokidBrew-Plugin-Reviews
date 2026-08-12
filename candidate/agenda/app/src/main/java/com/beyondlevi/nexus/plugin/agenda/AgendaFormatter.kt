@@ -50,9 +50,6 @@ object AgendaFormatter {
      */
     const val PROSE_ROW_COLS = PROSE_LINE_COLS * PROSE_ROW_LINES
 
-    /** Prose rows per page: 4 x 3 wrapped lines fills the card body without clipping. */
-    const val PROSE_ROWS_PER_PAGE = 4
-
     /**
      * The mark that says "a tap opens this one".
      *
@@ -313,71 +310,162 @@ object AgendaFormatter {
     }
 
     /**
-     * The whole description, cut into pages of prose rows. Chunking on word
-     * boundaries is the point: a row past [PROSE_ROW_COLS] loses its tail on the
-     * HUD, and a page past [PROSE_ROWS_PER_PAGE] rows is clipped by the card body.
+     * What a reader document may cost, in the two things the platform actually
+     * measures: characters (the typed model) and **serialized bytes** (the SDK
+     * preflight and the transport).
      */
-    fun notesPages(description: String?): List<List<String>> {
-        val text = plainText(description)
-        if (text.isEmpty()) return emptyList()
-        return chunkForProseRows(text).chunked(PROSE_ROWS_PER_PAGE)
+    data class ReaderBudget(val chars: Int, val bytes: Int)
+
+    /**
+     * The budget for one reader payload.
+     *
+     * Two independent ceilings, and counting characters catches neither:
+     *  - `sendSurface` rejects a payload whose serialized JSON exceeds **64 KiB**
+     *    (`INVALID_PAYLOAD`), and the SPP data plane does not relax it. 40,000
+     *    characters is inside the model's char cap yet up to ~80 KB of accented
+     *    pt-BR or CJK text, so the surface would silently never appear and the
+     *    wearer would stay on the previous screen.
+     *  - on a control-channel-only link the framed envelope must stay under
+     *    ~3 KiB (see §1 of the field gotchas), which is bytes again.
+     *
+     * [shellBytes] is what the caller will spend on title, subtitle, footer and
+     * contentKey — measured, not assumed: a long accented title is worth three
+     * times its character count.
+     */
+    fun readerBudget(shellBytes: Int, dataPlaneUp: Boolean): ReaderBudget {
+        val cap = if (dataPlaneUp) MAX_PAYLOAD_BYTES else CXR_SAFE_BYTES
+        val bytes = cap - PAYLOAD_FRAMING_BYTES - shellBytes
+        return ReaderBudget(chars = MAX_TOTAL_CHARS, bytes = bytes.coerceAtLeast(0))
+    }
+
+    /**
+     * The whole description as reader segments, one PROSE segment per paragraph.
+     *
+     * A reader surface has no three-line clamp and no pages: the glasses renderer
+     * wraps and scrolls the document itself, so nothing here computes geometry.
+     * What it does enforce is every limit that would otherwise reject the payload
+     * — the model's character caps, the 240-segment cap, and the serialized byte
+     * budget from [readerBudget]. A slot, its characters AND its bytes are held
+     * back for the closing notice, so a document that had to be cut always says
+     * so instead of just stopping.
+     */
+    fun readerSegments(
+        description: String?,
+        labels: AgendaLabels,
+        budget: ReaderBudget = ReaderBudget(MAX_TOTAL_CHARS, MAX_PAYLOAD_BYTES - PAYLOAD_FRAMING_BYTES),
+    ): List<AgendaSegment> {
+        val paragraphs = plainText(description, keepBreaks = true)
+            .split(PARAGRAPH_BREAK)
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .flatMap { paragraph -> paragraph.chunked(MAX_SEGMENT_CHARS) }
+        if (paragraphs.isEmpty()) return emptyList()
+
+        val notice = labels.readerTruncated
+        var charsLeft = budget.chars.coerceAtMost(MAX_TOTAL_CHARS) - notice.length
+        var bytesLeft = budget.bytes - segmentByteCost(notice)
+        val segments = mutableListOf<AgendaSegment>()
+        var truncated = false
+
+        for (paragraph in paragraphs) {
+            // MAX_SEGMENTS - 1: the closing notice needs a slot of its own, or a
+            // cut document loses its marker (the cap rejects the extra segment).
+            if (segments.size >= MAX_SEGMENTS - 1) {
+                truncated = true
+                break
+            }
+            val cost = segmentByteCost(paragraph)
+            if (paragraph.length <= charsLeft && cost <= bytesLeft) {
+                segments += AgendaSegment(AgendaSegmentKind.PROSE, paragraph)
+                charsLeft -= paragraph.length
+                bytesLeft -= cost
+                continue
+            }
+            // It does not fit whole. Send as much of its beginning as the budget
+            // carries rather than nothing: a wearer who asked for the notes wants
+            // the first lines far more than an apology on its own.
+            val prefix = longestPrefix(paragraph, charsLeft, bytesLeft)
+            if (prefix.isNotEmpty()) {
+                segments += AgendaSegment(AgendaSegmentKind.PROSE, prefix)
+            }
+            truncated = true
+            break
+        }
+        if (truncated) segments += AgendaSegment(AgendaSegmentKind.ASIDE, notice)
+        return segments
+    }
+
+    /**
+     * The longest beginning of [text] that fits both budgets, backed off to a word
+     * boundary when one is close enough to be worth it.
+     */
+    private fun longestPrefix(text: String, charsLeft: Int, bytesLeft: Int): String {
+        var used = SEGMENT_ENVELOPE_BYTES
+        var end = 0
+        while (end < text.length && end < charsLeft) {
+            val next = used + jsonByteCost(text[end].toString())
+            if (next > bytesLeft) break
+            used = next
+            end++
+        }
+        if (end <= 0) return ""
+        val cut = text.lastIndexOf(' ', end - 1)
+        val boundary = if (cut >= end - WORD_BOUNDARY_SLACK && cut > 0) cut else end
+        return text.take(boundary).trimEnd()
+    }
+
+    /** Bytes one segment costs on the wire: escaped UTF-8 text plus its envelope. */
+    fun segmentByteCost(text: String): Int = jsonByteCost(text) + SEGMENT_ENVELOPE_BYTES
+
+    /**
+     * Serialized size of [text] inside JSON. Escaping matters: a quote-heavy or
+     * newline-heavy description grows past its UTF-8 length, and that growth is
+     * measured by the same preflight that rejects the payload.
+     */
+    fun jsonByteCost(text: String): Int {
+        var bytes = 0
+        for (ch in text) {
+            bytes += when {
+                ch == '"' || ch == '\\' -> 2
+                ch < ' ' -> 6
+                ch.code < 0x80 -> 1
+                ch.code < 0x800 -> 2
+                ch.isSurrogate() -> 2
+                else -> 3
+            }
+        }
+        return bytes
     }
 
     /**
      * Calendar descriptions are HTML, not prose: Google and Outlook both ship
      * `<br />`, anchor tags and entities, plus a decorative rule of `-::~:~::~`
      * that eats a whole HUD page. None of that survives to the glasses.
+     *
+     * [keepBreaks] preserves paragraph structure, which a reader wants and a
+     * one-row preview does not.
      */
-    fun plainText(raw: String?): String {
+    fun plainText(raw: String?, keepBreaks: Boolean = false): String {
         if (raw.isNullOrBlank()) return ""
         var text: String = raw
-        BLOCK_TAGS.forEach { text = it.replace(text, " ") }
+        val blockBreak = if (keepBreaks) "\n" else " "
+        BLOCK_TAGS.forEach { text = it.replace(text, blockBreak) }
         text = TAG.replace(text, "")
         ENTITIES.forEach { (entity, char) -> text = text.replace(entity, char) }
         text = NUMERIC_ENTITY.replace(text) { match ->
             match.groupValues[1].toIntOrNull()?.takeIf { it in 1..0x10FFFF }
                 ?.let { String(Character.toChars(it)) } ?: ""
         }
-        text = text.split(' ', '\n', '\t')
-            .filterNot { token -> token.length >= DIVIDER_MIN && token.all { it in DIVIDER_CHARS } }
-            .joinToString(" ")
-        return text.replace(WHITESPACE, " ").trim()
-    }
-
-    /** Rows for one page of [notesPages]. */
-    fun notesRows(page: List<String>): List<AgendaRow> =
-        page.map { AgendaRow(text = it, tone = AgendaTone.BODY) }
-
-    /**
-     * Cuts prose into rows the renderer can draw whole. Sized by *wrapped lines*
-     * rather than characters, because that is what the HUD clips on: a row of
-     * three short lines and a row holding one long URL hold wildly different
-     * character counts, and the character-sized version lost the URL's tail.
-     */
-    fun chunkForProseRows(text: String): List<String> {
-        val rows = mutableListOf<String>()
-        var row = StringBuilder()
-        fun flush() {
-            if (row.isNotEmpty()) rows += row.toString().trim()
-            row = StringBuilder()
+        text = text.lines().joinToString("\n") { line ->
+            line.split(' ', '\t')
+                .filterNot { token -> token.length >= DIVIDER_MIN && token.all { it in DIVIDER_CHARS } }
+                .joinToString(" ")
         }
-        text.split(' ').filter { it.isNotEmpty() }.forEach { word ->
-            // A token no line can hold (a long URL) is cut across whole rows.
-            if (renderedLineCount(word) > PROSE_ROW_LINES) {
-                flush()
-                word.chunked(PROSE_LINE_COLS * PROSE_ROW_LINES).forEach { rows += it }
-                return@forEach
-            }
-            val candidate = if (row.isEmpty()) word else "$row $word"
-            if (renderedLineCount(candidate) > PROSE_ROW_LINES) {
-                flush()
-                row.append(word)
-            } else {
-                row = StringBuilder(candidate)
-            }
+        return if (keepBreaks) {
+            text.lines().joinToString("\n") { it.replace(HORIZONTAL_SPACE, " ").trim() }.trim()
+        } else {
+            text.replace(WHITESPACE, " ").trim()
         }
-        flush()
-        return rows.filter { it.isNotEmpty() }
     }
 
     /**
@@ -439,24 +527,6 @@ object AgendaFormatter {
         }
         if (current.isNotEmpty()) segments += current.toString()
         return segments
-    }
-
-    private fun chunkOnWords(text: String, columns: Int): List<String> {
-        val chunks = mutableListOf<String>()
-        var rest = text
-        while (rest.isNotEmpty()) {
-            if (rest.length <= columns) {
-                chunks += rest
-                break
-            }
-            val window = rest.take(columns + 1)
-            val cut = window.lastIndexOf(' ')
-            // Only honour a word boundary that is not wasting a third of the row.
-            val take = if (cut >= columns - WORD_BOUNDARY_SLACK) cut else columns
-            chunks += rest.take(take).trim()
-            rest = rest.drop(take).trimStart()
-        }
-        return chunks.filter { it.isNotEmpty() }
     }
 
     /** Columns left for the title once the trail has taken its share of the row. */
@@ -611,8 +681,27 @@ object AgendaFormatter {
     /** A trail character costs about this much of the title's width, plus a gap. */
     private const val TRAIL_COLUMN_COST = 0.8
     private const val MIN_TITLE_COLS = 12
-    private const val WORD_BOUNDARY_SLACK = 12
     private const val DIVIDER_MIN = 6
+    private const val MAX_SEGMENTS = 240
+    private const val MAX_SEGMENT_CHARS = 4_096
+    private const val MAX_TOTAL_CHARS = 40_000
+
+    /** The SDK rejects a surface whose serialized JSON passes this (INVALID_PAYLOAD). */
+    const val MAX_PAYLOAD_BYTES = 64 * 1024
+
+    /** What a control-channel-only link carries once framing is counted (§1). */
+    const val CXR_SAFE_BYTES = 2_600
+
+    /** Envelope of the payload itself: surfaceId, kind, flags, seq, ids. */
+    private const val PAYLOAD_FRAMING_BYTES = 512
+
+    /** `{"kind":"prose","text":""},` and friends, per segment. */
+    private const val SEGMENT_ENVELOPE_BYTES = 32
+
+    /** How far back a word boundary may pull a cut before it is not worth it. */
+    private const val WORD_BOUNDARY_SLACK = 24
+    private val PARAGRAPH_BREAK = Regex("\n+")
+    private val HORIZONTAL_SPACE = Regex("[ \t\r]+")
     private const val BREAK_BEFORE = "/-_&?="
     private const val DIVIDER_CHARS = "-:~_=*·—"
     private val TAG = Regex("<[^>]*>")

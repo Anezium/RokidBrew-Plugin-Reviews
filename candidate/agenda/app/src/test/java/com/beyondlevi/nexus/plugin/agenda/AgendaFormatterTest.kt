@@ -442,22 +442,153 @@ class AgendaFormatterTest {
     }
 
     @Test
-    fun `the description is paged into rows the renderer can actually draw`() {
-        val description = (1..60).joinToString(" ") { "palavra$it" }
-        val pages = AgendaFormatter.notesPages(description)
-        assertTrue(pages.isNotEmpty())
-        pages.forEach { page ->
-            assertTrue(page.size <= AgendaFormatter.PROSE_ROWS_PER_PAGE)
-            page.forEach {
-                assertTrue(
-                    "row would be clipped: $it",
-                    AgendaFormatter.renderedLineCount(it) <= AgendaFormatter.PROSE_ROW_LINES,
-                )
-            }
-        }
-        // Nothing is lost and nothing is duplicated across the pages.
-        val rebuilt = pages.flatten().joinToString(" ")
-        assertEquals(description, rebuilt)
+    fun `the description becomes reader segments, one per paragraph`() {
+        val description = "First paragraph, short.\n\nSecond paragraph, also short.\n\nThird."
+        val segments = AgendaFormatter.readerSegments(description, labels)
+        assertEquals(3, segments.size)
+        assertTrue(segments.all { it.kind == AgendaSegmentKind.PROSE })
+        assertEquals("First paragraph, short.", segments[0].text)
+        assertEquals("Third.", segments[2].text)
+    }
+
+    @Test
+    fun `the reader keeps the paragraphs a calendar sends as line breaks`() {
+        val raw = "Agenda<br /><br />Item one<br />Item two"
+        val segments = AgendaFormatter.readerSegments(raw, labels)
+        assertEquals(listOf("Agenda", "Item one", "Item two"), segments.map { it.text })
+    }
+
+    @Test
+    fun `a description with nothing readable produces no segments`() {
+        assertTrue(AgendaFormatter.readerSegments(null, labels).isEmpty())
+        assertTrue(AgendaFormatter.readerSegments("   ", labels).isEmpty())
+        assertTrue(AgendaFormatter.readerSegments("<br /><br /> -::~:~::~ ", labels).isEmpty())
+    }
+
+    @Test
+    fun `nothing is clipped to three lines any more — a long paragraph stays whole`() {
+        val long = "palavra ".repeat(400).trim()
+        val segments = AgendaFormatter.readerSegments(long, labels)
+        assertEquals(1, segments.size)
+        assertEquals(long, segments.single().text)
+        // Far past what a prose row could ever draw.
+        assertTrue(segments.single().text.length > AgendaFormatter.PROSE_ROW_COLS * 10)
+    }
+
+    @Test
+    fun `a paragraph past the per-segment cap is split instead of throwing`() {
+        val monster = "x".repeat(9_000)
+        val segments = AgendaFormatter.readerSegments(monster, labels)
+        assertTrue(segments.size >= 3)
+        assertTrue(segments.all { it.text.length <= 4_096 })
+        assertEquals(monster.length, segments.filter { it.kind == AgendaSegmentKind.PROSE }
+            .sumOf { it.text.length })
+    }
+
+    private fun payloadBytes(segments: List<AgendaSegment>, shellBytes: Int): Int =
+        shellBytes + segments.sumOf { AgendaFormatter.segmentByteCost(it.text) }
+
+    @Test
+    fun `a link without the data plane gets a document the control channel can carry`() {
+        val long = ("A paragraph of ordinary length that a meeting description would carry. ")
+            .repeat(80)
+        val shell = 300
+        val full = AgendaFormatter.readerSegments(
+            long,
+            labels,
+            AgendaFormatter.readerBudget(shell, dataPlaneUp = true),
+        )
+        val bounded = AgendaFormatter.readerSegments(
+            long,
+            labels,
+            AgendaFormatter.readerBudget(shell, dataPlaneUp = false),
+        )
+        assertTrue(payloadBytes(bounded, shell) <= AgendaFormatter.CXR_SAFE_BYTES)
+        assertTrue(bounded.sumOf { it.text.length } < full.sumOf { it.text.length })
+        // And it says the rest was left out rather than just stopping.
+        assertEquals(AgendaSegmentKind.ASIDE, bounded.last().kind)
+    }
+
+    @Test
+    fun `an accented description at the character cap still fits the 64 KiB payload`() {
+        // The bug this pins: 40,000 characters is inside the model's char cap and
+        // ~80 KB of UTF-8 once every character is accented, and `sendSurface`
+        // answers INVALID_PAYLOAD — the wearer just stays on the previous screen.
+        val accented = ("Reunião de acompanhamento com decisões pendentes e ações. ")
+            .repeat(1_200)
+        assertTrue(accented.length > 40_000)
+        val shell = 400
+        val segments = AgendaFormatter.readerSegments(
+            accented,
+            labels,
+            AgendaFormatter.readerBudget(shell, dataPlaneUp = true),
+        )
+        val bytes = payloadBytes(segments, shell)
+        assertTrue("payload was $bytes bytes", bytes <= AgendaFormatter.MAX_PAYLOAD_BYTES)
+        assertTrue(segments.sumOf { it.text.length } <= 40_000)
+        assertEquals(AgendaSegmentKind.ASIDE, segments.last().kind)
+    }
+
+    @Test
+    fun `a single huge paragraph still delivers its beginning, not just an apology`() {
+        val one = ("Uma frase comum de descrição de reunião, com acentuação. ").repeat(60)
+        val segments = AgendaFormatter.readerSegments(
+            one, labels, AgendaFormatter.readerBudget(300, dataPlaneUp = false),
+        )
+        // Prose first, notice last — never the notice alone.
+        assertEquals(AgendaSegmentKind.PROSE, segments.first().kind)
+        assertTrue(segments.first().text.length > 200)
+        assertTrue(one.startsWith(segments.first().text.take(40)))
+        assertEquals(AgendaSegmentKind.ASIDE, segments.last().kind)
+        assertTrue(payloadBytes(segments, 300) <= AgendaFormatter.CXR_SAFE_BYTES)
+    }
+
+    @Test
+    fun `a heavy shell shrinks the document instead of overflowing the link`() {
+        val long = ("Uma frase comum de descrição de reunião, com acentuação. ").repeat(60)
+        val small = AgendaFormatter.readerSegments(
+            long, labels, AgendaFormatter.readerBudget(200, dataPlaneUp = false),
+        )
+        val heavy = AgendaFormatter.readerSegments(
+            long, labels, AgendaFormatter.readerBudget(1_200, dataPlaneUp = false),
+        )
+        assertTrue(
+            heavy.sumOf { it.text.length } < small.sumOf { it.text.length },
+        )
+        assertTrue(payloadBytes(heavy, 1_200) <= AgendaFormatter.CXR_SAFE_BYTES)
+    }
+
+    @Test
+    fun `escaping is counted, not guessed`() {
+        assertEquals(4, AgendaFormatter.jsonByteCost("abcd"))
+        // Accented characters are two bytes, a quote is escaped to two.
+        assertEquals(2, AgendaFormatter.jsonByteCost("ç"))
+        assertEquals(2, AgendaFormatter.jsonByteCost("\""))
+        assertEquals(6, AgendaFormatter.jsonByteCost("\n"))
+    }
+
+    @Test
+    fun `the closing notice always has a slot left for it`() {
+        // 240 short paragraphs would fill every segment slot; the notice must
+        // still fit, or a cut document loses its marker entirely.
+        val many = (1..400).joinToString("\n\n") { "Item $it." }
+        val segments = AgendaFormatter.readerSegments(
+            many, labels, AgendaFormatter.readerBudget(300, dataPlaneUp = true),
+        )
+        assertTrue(segments.size <= 240)
+        assertEquals(AgendaSegmentKind.ASIDE, segments.last().kind)
+        assertEquals(labels.readerTruncated, segments.last().text)
+    }
+
+    @Test
+    fun `a description past the reader total says the rest did not fit`() {
+        // The SDK model throws above 40,000 characters; we must stay under it.
+        val huge = ("paragraph " + "y".repeat(3_000) + "\n\n").repeat(20)
+        val segments = AgendaFormatter.readerSegments(huge, labels)
+        assertTrue(segments.sumOf { it.text.length } <= 40_000)
+        assertTrue(segments.size <= 240)
+        assertEquals(AgendaSegmentKind.ASIDE, segments.last().kind)
+        assertEquals(labels.readerTruncated, segments.last().text)
     }
 
     @Test
@@ -489,47 +620,9 @@ class AgendaFormatterTest {
     }
 
     @Test
-    fun `a description that is only markup opens no page at all`() {
-        assertTrue(AgendaFormatter.notesPages("<br /><br /> -::~:~::~ ").isEmpty())
+    fun `a description that is only markup opens nothing`() {
+        assertTrue(AgendaFormatter.readerSegments("<br /><br /> -::~:~::~ ", labels).isEmpty())
         assertTrue(AgendaFormatter.plainText("<div></div>").isEmpty())
-    }
-
-    @Test
-    fun `a short description is a single page`() {
-        val pages = AgendaFormatter.notesPages("Pauta: fechamento do trimestre.")
-        assertEquals(1, pages.size)
-        assertEquals(1, pages.single().size)
-    }
-
-    @Test
-    fun `an empty description has no pages at all`() {
-        assertTrue(AgendaFormatter.notesPages(null).isEmpty())
-        assertTrue(AgendaFormatter.notesPages("   ").isEmpty())
-    }
-
-    @Test
-    fun `a word longer than a row is cut rather than lost`() {
-        val monster = "x".repeat(200)
-        val pages = AgendaFormatter.notesPages(monster)
-        assertEquals(monster.length, pages.flatten().sumOf { it.length })
-        pages.flatten().forEach {
-            assertTrue(AgendaFormatter.renderedLineCount(it) <= AgendaFormatter.PROSE_ROW_LINES)
-        }
-    }
-
-    @Test
-    fun `a row holding a long URL is still drawn whole`() {
-        // The real case: a Roam/Meet link inside an invitation. Sized by
-        // characters, this row lost its tail on the HUD without a trace.
-        val description = "Participar Roam Meeting " +
-            "https://ro.am/r/#/d/AAAAAAAAAAAAAAAAAAAAAA/_bbbbbbbb-cccccccccccc " +
-            "Instruções de participação seguem abaixo."
-        AgendaFormatter.notesPages(description).flatten().forEach {
-            assertTrue(
-                "row would be clipped: $it",
-                AgendaFormatter.renderedLineCount(it) <= AgendaFormatter.PROSE_ROW_LINES,
-            )
-        }
     }
 
     @Test
@@ -546,17 +639,13 @@ class AgendaFormatterTest {
         // breaker cuts at the slashes and leaves the previous line short.
         val url = "https://ro.am/r/#/d/AAAAAAAAAAAAAAAAAAAAAA/_bbbbbbbb-cccccccccccc"
         assertEquals(3, AgendaFormatter.renderedLineCount(url))
-        // So nothing else may share its row.
-        val rows = AgendaFormatter.chunkForProseRows("$url Instruções de participação")
-        assertTrue(rows.first().endsWith("cccccccccccc"))
-        assertTrue(rows.size > 1)
+        // Which is why the preview row stops before it rather than clipping.
+        val preview = detail(event(description = "$url e mais texto depois"))
+            .single { it.target == AgendaDetailTarget.NOTES }
+        assertTrue(AgendaFormatter.renderedLineCount(preview.text) <= AgendaFormatter.PROSE_ROW_LINES)
     }
 
-    @Test
-    fun `notes rows are prose rows`() {
-        val page = AgendaFormatter.notesPages("uma descrição qualquer").single()
-        assertTrue(AgendaFormatter.notesRows(page).all { it.tone == AgendaTone.BODY })
-    }
+
 
     @Test
     fun `prose is collapsed to one paragraph and bounded`() {

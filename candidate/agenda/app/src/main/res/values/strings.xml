@@ -32,6 +32,8 @@
     <string name="hud_page_of">page %1$d/%2$d</string>
     <string name="hud_page_footer">swipe to turn · back</string>
     <string name="hud_position_footer">%1$d/%2$d · back</string>
+    <string name="hud_reader_footer">scroll to read · back</string>
+    <string name="hud_reader_truncated">… the rest did not fit</string>
     <string name="hud_more">+%1$d more</string>
 
     <!-- Settings (phone). -->
