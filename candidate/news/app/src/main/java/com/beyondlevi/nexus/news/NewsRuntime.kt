@@ -2,6 +2,7 @@ package com.beyondlevi.nexus.news
 
 import android.util.Log
 import com.anezium.rokidbus.client.plugin.NexusCard
+import com.anezium.rokidbus.client.plugin.NexusReader
 import com.anezium.rokidbus.client.plugin.NexusSdkResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +29,16 @@ class NewsRuntime(
     interface Host {
         fun showCard(card: NexusCard): NexusSdkResult
         fun updateCard(card: NexusCard): NexusSdkResult
+        fun showReader(reader: NexusReader): NexusSdkResult
+        fun updateReader(reader: NexusReader): NexusSdkResult
         fun hideSurface()
+
+        /**
+         * Whether the SPP data plane is up. `supportsImageSurface` is the SDK's
+         * only window onto it, and a reader document is far past the 3 KiB the
+         * control link alone will carry.
+         */
+        fun dataPlaneUp(): Boolean
     }
 
     val state = NewsState()
@@ -36,7 +46,7 @@ class NewsRuntime(
     private var host: Host? = null
     private var scope: CoroutineScope? = null
     private var shown = false
-    private var lastSentContentKey: String? = null
+    private var lastSentFingerprint: String? = null
     private var refreshing = false
 
     // ------------------------------------------------------------------ session
@@ -45,7 +55,7 @@ class NewsRuntime(
         this.host = host
         // A fresh PLUGIN_OPEN is re-entrant: reset everything and re-show.
         shown = false
-        lastSentContentKey = null
+        lastSentFingerprint = null
         refreshing = false
         scope?.cancel()
         val sessionScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -68,7 +78,7 @@ class NewsRuntime(
         host?.hideSurface()
         host = null
         shown = false
-        lastSentContentKey = null
+        lastSentFingerprint = null
     }
 
     // -------------------------------------------------------------- one-axis input
@@ -216,17 +226,30 @@ class NewsRuntime(
 
     fun render() {
         val target = host ?: return
-        val card = NewsSurfaces.card(state, clock())
-        val key = card.contentKey
-        if (shown && key != null && key == lastSentContentKey) return
-        val result = if (shown) target.updateCard(card) else target.showCard(card)
+        // The reader view is a different surface kind on the same local surface:
+        // a kind change through SURFACE_UPDATE is handled hub-side.
+        val reader = if (state.view == NewsState.View.READER) {
+            NewsSurfaces.reader(state, clock(), target.dataPlaneUp())
+        } else {
+            null
+        }
+        val card = if (reader == null) NewsSurfaces.card(state, clock()) else null
+        // Dedupe on what was rendered, not on the surface's identity: an open
+        // article whose text changed after a refresh keeps its contentKey.
+        val fingerprint = reader?.let(NewsSurfaces::fingerprint) ?: card?.let(NewsSurfaces::fingerprint)
+        if (shown && fingerprint != null && fingerprint == lastSentFingerprint) return
+        val result = when {
+            reader != null -> if (shown) target.updateReader(reader) else target.showReader(reader)
+            card != null -> if (shown) target.updateCard(card) else target.showCard(card)
+            else -> return
+        }
         if (result == NexusSdkResult.SENT) {
             shown = true
-            lastSentContentKey = key
+            lastSentFingerprint = fingerprint
         } else {
             // Another plugin owns the HUD, or the grant/link is gone. Give up
             // quietly — never retry-loop a surface send.
-            lastSentContentKey = null
+            lastSentFingerprint = null
             Log.w(TAG, "Surface send returned $result")
         }
     }

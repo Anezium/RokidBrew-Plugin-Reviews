@@ -118,14 +118,38 @@ Installing grants nothing on its own, and changing the requested capability set
 resets the grant to Pending. Switching signing keys (debug ↔ release) needs an
 uninstall, reinstall and re-approval.
 
+## Releases
+
+`news-v1.0.2` is the first Store release: [news-phone-release.apk](https://github.com/beyondlevi/news-nexus/releases/tag/news-v1.0.2),
+signed with the plugin's permanent certificate. A plugin's
+identity is `package + pluginId + signerSha256`, so that certificate never
+changes; installing the Store build over a locally sideloaded debug build
+requires uninstalling the debug one first.
+
+Verify any release APK before installing it — the full signer fingerprint is:
+
+```
+07d94dca37d6327e2e55783f5b6bfaad213fd49841ae306e8b5ed26168aedf17
+```
+
+```bash
+apksigner verify --print-certs news-phone-release.apk   # Signer #1 certificate SHA-256 digest
+```
+
+It must match the `signerSha256` pinned in the registry descriptor; the phone
+hub checks the same value before it installs.
+
 ## Roadmap
 
 - Read aloud on the glasses via the hub `tts` capability (a new capability means
   re-approval, so it is a deliberate later step).
 - Article images on the HUD image surface, for feeds that carry `media:thumbnail`.
 - OPML import/export in the settings screen.
-- Publishing to the in-app Nexus Store through the
-  [RokidBrew registry](https://github.com/Anezium/RokidBrew-Registry).
+In the in-app Nexus Store. Releases live under the namespaced tag `news-vX.Y.Z`;
+each one is submitted as a registry descriptor update:
+[#60](https://github.com/Anezium/RokidBrew-Registry/pull/60) added 1.0.2 (merged),
+[#73](https://github.com/Anezium/RokidBrew-Registry/pull/73) submits the current
+release.
 
 ## License
 

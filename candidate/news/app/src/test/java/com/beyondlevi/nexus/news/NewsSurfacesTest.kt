@@ -1,5 +1,6 @@
 package com.beyondlevi.nexus.news
 
+import com.anezium.rokidbus.client.plugin.NexusReaderAnchor
 import com.anezium.rokidbus.client.plugin.NexusRowTone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -110,20 +111,66 @@ class NewsSurfacesTest {
     }
 
     @Test
-    fun `reader rows are prose rows and carry the page position`() {
-        val body = (1..60).joinToString(" ") { "word$it" }
+    fun `the reader view builds a reader surface, not a card`() {
+        val body = (1..300).joinToString(" ") { "word$it" }
         val state = NewsState().apply {
             setFeeds(listOf(feed(1)))
-            setArticles(listOf(article(1).copy(summary = "$body\n$body")))
+            setArticles(listOf(article(1).copy(summary = "$body\n$body", feedTitle = "Feed 1")))
         }
         state.activate()
         state.activate()
 
-        val card = NewsSurfaces.card(state, now)
+        val reader = NewsSurfaces.reader(state, now)!!
 
-        assertTrue(card.richLines.orEmpty().all { it.tone == NexusRowTone.BODY })
-        assertTrue(card.richLines.orEmpty().none { it.selected })
-        assertTrue("page position missing: ${card.subtitle}", card.subtitle!!.contains("page 1/"))
+        assertTrue(reader.handlesBack)
+        // An article is document-shaped: it opens on its first paragraph and a
+        // refresh never yanks the wearer to the new end.
+        assertEquals(NexusReaderAnchor.TOP, reader.anchor)
+        assertTrue(reader.segments.size >= 3)
+        assertTrue(reader.contentKey!!.length <= 128)
+        assertEquals("swipe to scroll · back to list", reader.footer)
+        // The body arrives whole: no page counter, no hand-wrapped rows.
+        assertTrue(reader.segments.any { it.text.length > 1_000 })
+        assertTrue(reader.subtitle!!.contains("Feed 1"))
+    }
+
+    @Test
+    fun `a refreshed article is re-sent even though its identity is unchanged`() {
+        val state = NewsState().apply {
+            setFeeds(listOf(feed(1)))
+            setArticles(listOf(article(1).copy(summary = "First version of the body.")))
+        }
+        state.activate()
+        state.activate()
+        val before = NewsSurfaces.reader(state, now)!!
+
+        // Same article id - a feed edit, not a new item.
+        state.setArticles(listOf(article(1).copy(summary = "The newsroom rewrote this paragraph.")))
+        val after = NewsSurfaces.reader(state, now)!!
+
+        assertEquals(before.contentKey, after.contentKey)
+        assertNotEquals(
+            "an id-only key would suppress this update and strand the wearer on stale text",
+            NewsSurfaces.fingerprint(before),
+            NewsSurfaces.fingerprint(after),
+        )
+    }
+
+    @Test
+    fun `losing the data plane changes the fingerprint but not the identity`() {
+        val body = (1..400).joinToString(" ") { "word$it" }
+        val state = NewsState().apply {
+            setFeeds(listOf(feed(1)))
+            setArticles(listOf(article(1).copy(summary = body)))
+        }
+        state.activate()
+        state.activate()
+
+        val full = NewsSurfaces.reader(state, now, dataPlaneUp = true)!!
+        val degraded = NewsSurfaces.reader(state, now, dataPlaneUp = false)!!
+
+        assertEquals(full.contentKey, degraded.contentKey)
+        assertNotEquals(NewsSurfaces.fingerprint(full), NewsSurfaces.fingerprint(degraded))
     }
 
     @Test
