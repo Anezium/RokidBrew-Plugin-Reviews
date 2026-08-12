@@ -2,6 +2,8 @@ package com.beyondlevi.nexus.news
 
 import com.anezium.rokidbus.client.plugin.NexusCard
 import com.anezium.rokidbus.client.plugin.NexusCardLine
+import com.anezium.rokidbus.client.plugin.NexusReader
+import com.anezium.rokidbus.client.plugin.NexusReaderAnchor
 import com.anezium.rokidbus.client.plugin.NexusRowTone
 import java.security.MessageDigest
 
@@ -46,6 +48,38 @@ object NewsSurfaces {
             // Cards can hold BACK, which is what lets BACK pop a view instead of
             // closing the plugin. At the root the plugin hides its own surface.
             handlesBack = true,
+        )
+    }
+
+    /**
+     * The article as a native reader document. Unlike a card this has no row
+     * layout and no three-line prose clamp: the glasses renderer wraps the
+     * segments and owns the scroll, so the whole article ships at once instead
+     * of being cut into viewport-sized pages here.
+     *
+     * `handlesBack` keeps BACK coming to the plugin, which pops back to the
+     * headline list instead of closing the plugin, and the TOP anchor
+     * (sdk-v0.15.0, glasses hub 1.4.3) makes an article open on its first
+     * paragraph. The default BOTTOM is stream semantics — right for a chat,
+     * wrong for a document — and under TOP an update also stops tail-following,
+     * so a refresh leaves the wearer exactly where they had scrolled to.
+     */
+    fun reader(
+        state: NewsState,
+        nowMs: Long = System.currentTimeMillis(),
+        dataPlaneUp: Boolean = true,
+    ): NexusReader? {
+        val article = state.currentOpenArticle() ?: return null
+        return NexusReader(
+            title = NewsFormat.ellipsize(article.title, MAX_CARD_TITLE_CHARS).ifBlank { "Article" },
+            subtitle = NewsFormat.articleMeta(article, includeFeed = true, nowMs = nowMs)
+                .takeIf { it.isNotBlank() }
+                ?.let { NewsFormat.ellipsize(it, MAX_SUB_CHARS) },
+            footer = "swipe to scroll · back to list",
+            contentKey = "news-" + sha256Hex("READER|" + article.id).take(32),
+            handlesBack = true,
+            segments = ArticleReader.segments(article, nowMs, dataPlaneUp),
+            anchor = NexusReaderAnchor.TOP,
         )
     }
 
@@ -135,16 +169,10 @@ object NewsSurfaces {
                     "$position of ${scoped.size}"
                 }
             }
-            NewsState.View.READER -> {
-                val article = state.currentOpenArticle()
-                val meta = article?.let { NewsFormat.articleMeta(it, includeFeed = true, nowMs = nowMs) }.orEmpty()
-                val pageLabel = if (state.pages.isEmpty()) "" else "page ${state.page + 1}/${state.pages.size}"
-                listOf(meta, pageLabel)
-                    .filter { it.isNotBlank() }
-                    .joinToString(" · ")
-                    .takeIf { it.isNotBlank() }
-                    ?.let { NewsFormat.ellipsize(it, MAX_SUB_CHARS) }
-            }
+            NewsState.View.READER -> state.currentOpenArticle()
+                ?.let { NewsFormat.articleMeta(it, includeFeed = true, nowMs = nowMs) }
+                ?.takeIf { it.isNotBlank() }
+                ?.let { NewsFormat.ellipsize(it, MAX_SUB_CHARS) }
         }
     }
 
@@ -153,7 +181,7 @@ object NewsSurfaces {
             if (state.feeds.isEmpty()) "back to exit" else "swipe · tap to open · back to exit"
         NewsState.View.ARTICLES -> "swipe · tap to read · back to feeds"
         NewsState.View.READER ->
-            if (state.pages.size > 1) "swipe or tap: next page · back to list" else "back to list"
+            "swipe to scroll · back to list"
     }
 
     /**
@@ -166,7 +194,6 @@ object NewsSurfaces {
             append(state.view.name)
             append('|').append(state.scopeFeedId.orEmpty())
             append('|').append(state.openArticleId.orEmpty())
-            append('|').append(state.page)
             append('|').append(window.firstIndex)
             append('|').append(window.selectedInWindow)
             append('|').append(window.totalRows)
