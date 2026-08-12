@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 73,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/73",
+    "title": "plugins-nexus: News 1.1.0 (native reader surface, minHostVersionCode 10403)",
+    "headSha": "ffd1055888b1207de03a1138f8657a6668dc4c35",
+    "baseSha": "f83867169c58f0fa287af624771265370aab2c41"
+  },
+  "descriptorPath": "plugins-nexus/news.json",
+  "plugin": {
+    "id": "news",
+    "name": "News",
+    "version": "1.1.0"
+  },
+  "previous": {
+    "pluginId": "news",
+    "pluginName": "News",
+    "version": "1.0.2",
+    "repository": "beyondlevi/news-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/news-nexus",
+    "tag": "news-v1.0.2",
+    "commit": "af3fd9527f333f26ece2b2af31493b3a1c57cf05"
+  },
+  "proposed": {
+    "pluginId": "news",
+    "pluginName": "News",
+    "version": "1.1.0",
+    "repository": "beyondlevi/news-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/news-nexus",
+    "tag": "news-v1.1.0",
+    "commit": "08a73aa89fb612ee2e7862a36dd19cd83e1ada00"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-73-news-08a73aa89f",
+    "head": "review-head/pr-73-news-08a73aa89f"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": "sdk-v0.15.0",
+    "ref": "sdk-v0.15.0",
+    "commit": "5e74a3b62e7769dc1f5b6706253dc00b3bdedccc"
+  }
+}
