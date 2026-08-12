@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher icon reuses the plugin glyph (see ICON_DRAWABLE in the
+     manifest): draw the glyph once in nexus_glyph_agenda.xml and the in-app
+     icon, the Android app icon and the themed icon all follow. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/nexus_glyph_agenda"
+    android:inset="20%" />

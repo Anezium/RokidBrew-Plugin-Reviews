@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agenda for Nexus</string>
+
+    <!-- HUD (glasses). Kept short: a list row title is one line, ~28 chars. -->
+    <string name="hud_title">Agenda</string>
+    <string name="hud_now">now</string>
+    <string name="hud_today">today</string>
+    <string name="hud_tomorrow">tomorrow</string>
+    <string name="hud_all_day">all day</string>
+    <string name="hud_until">until</string>
+    <string name="hud_no_events">No events in the next %1$d days</string>
+    <string name="hud_no_access">Calendar access not granted</string>
+    <string name="hud_no_access_hint">Open Agenda on the phone to allow it</string>
+    <string name="hud_loading">Loading agenda…</string>
+    <string name="hud_list_footer">tap to open · back to close</string>
+    <string name="hud_detail_footer">back to the list</string>
+    <string name="hud_events_count">%1$d events · %2$d days</string>
+    <string name="hud_untitled">(no title)</string>
+    <string name="hud_where">where</string>
+    <string name="hud_notes">notes</string>
+    <string name="hud_who">who</string>
+    <string name="hud_participants">Participants</string>
+    <string name="hud_notes_title">Notes</string>
+    <string name="hud_people_count">%1$d people</string>
+    <string name="hud_open_hint">tap to open</string>
+    <string name="hud_organizer">organizer</string>
+    <string name="hud_rsvp_yes">yes</string>
+    <string name="hud_rsvp_no">no</string>
+    <string name="hud_rsvp_maybe">maybe</string>
+    <string name="hud_rsvp_pending">-</string>
+    <string name="hud_page_of">page %1$d/%2$d</string>
+    <string name="hud_page_footer">swipe to turn · back</string>
+    <string name="hud_position_footer">%1$d/%2$d · back</string>
+    <string name="hud_more">+%1$d more</string>
+
+    <!-- Settings (phone). -->
+    <string name="settings_subtitle">Your calendar on the glasses</string>
+    <string name="settings_section_access">Calendar access</string>
+    <string name="settings_grant">Allow calendar access</string>
+    <string name="settings_grant_sub">Read-only. Nothing leaves the phone.</string>
+    <string name="settings_granted">Calendar access granted</string>
+    <string name="settings_denied">Denied. Enable it in Android Settings → Apps → Agenda for Nexus → Permissions.</string>
+    <string name="settings_section_horizon">How far ahead</string>
+    <string name="settings_section_calendars">Calendars</string>
+    <string name="settings_calendars_hint">Nothing selected means every calendar the phone shows.</string>
+    <string name="settings_no_calendars">No calendars found on this phone.</string>
+    <string name="settings_section_filters">Filters</string>
+    <string name="settings_all_day">Show all-day events</string>
+    <string name="settings_hide_declined">Hide events you declined</string>
+    <string name="settings_section_plugin">Plugin</string>
+    <string name="settings_on">On</string>
+    <string name="settings_off">Off</string>
+    <string name="settings_horizon_days">%1$d days</string>
+    <string name="settings_horizon_day">1 day</string>
+</resources>

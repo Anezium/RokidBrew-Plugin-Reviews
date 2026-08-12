@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 74,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/74",
+    "title": "Agenda 1.1.1 (native reader surface, minHostVersionCode 10403)",
+    "headSha": "6596a9a9ae56049d48360a8fb800d86185c79fda",
+    "baseSha": "421ea1ef177c1e10115862ac61f4dff44de408a9"
+  },
+  "descriptorPath": "plugins-nexus/agenda.json",
+  "plugin": {
+    "id": "agenda",
+    "name": "Agenda",
+    "version": "1.1.1"
+  },
+  "previous": {
+    "pluginId": "agenda",
+    "pluginName": "Agenda",
+    "version": "1.0.1",
+    "repository": "beyondlevi/rokid-agenda-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/rokid-agenda-nexus",
+    "tag": "agenda-v1.0.1",
+    "commit": "b910ec19f44bc9b999acc96ddf70f44e0d4067b7"
+  },
+  "proposed": {
+    "pluginId": "agenda",
+    "pluginName": "Agenda",
+    "version": "1.1.1",
+    "repository": "beyondlevi/rokid-agenda-nexus",
+    "repositoryUrl": "https://github.com/beyondlevi/rokid-agenda-nexus",
+    "tag": "agenda-v1.1.1",
+    "commit": "87c5ed3e265dcb85669aada67b62aebc3e022e70"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-74-agenda-87c5ed3e26",
+    "head": "review-head/pr-74-agenda-87c5ed3e26"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": "sdk-v0.15.0",
+    "ref": "sdk-v0.15.0",
+    "commit": "5e74a3b62e7769dc1f5b6706253dc00b3bdedccc"
+  }
+}

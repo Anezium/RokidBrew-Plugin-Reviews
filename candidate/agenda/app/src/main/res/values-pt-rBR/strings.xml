@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Agenda para Nexus</string>
+
+    <string name="hud_title">Agenda</string>
+    <string name="hud_now">agora</string>
+    <string name="hud_today">hoje</string>
+    <string name="hud_tomorrow">amanhã</string>
+    <string name="hud_all_day">dia todo</string>
+    <string name="hud_until">até</string>
+    <string name="hud_no_events">Nada nos próximos %1$d dias</string>
+    <string name="hud_no_access">Sem acesso ao calendário</string>
+    <string name="hud_no_access_hint">Abra a Agenda no celular para liberar</string>
+    <string name="hud_loading">Carregando agenda…</string>
+    <string name="hud_list_footer">toque para abrir · voltar fecha</string>
+    <string name="hud_detail_footer">voltar para a lista</string>
+    <string name="hud_events_count">%1$d eventos · %2$d dias</string>
+    <string name="hud_untitled">(sem título)</string>
+    <string name="hud_where">onde</string>
+    <string name="hud_notes">notas</string>
+    <string name="hud_who">quem</string>
+    <string name="hud_participants">Participantes</string>
+    <string name="hud_notes_title">Notas</string>
+    <string name="hud_people_count">%1$d pessoas</string>
+    <string name="hud_open_hint">toque abre</string>
+    <string name="hud_organizer">organizador</string>
+    <string name="hud_rsvp_yes">sim</string>
+    <string name="hud_rsvp_no">não</string>
+    <string name="hud_rsvp_maybe">talvez</string>
+    <string name="hud_rsvp_pending">-</string>
+    <string name="hud_page_of">página %1$d/%2$d</string>
+    <string name="hud_page_footer">gire para virar · voltar</string>
+    <string name="hud_position_footer">%1$d/%2$d · voltar</string>
+    <string name="hud_more">+%1$d</string>
+
+    <string name="settings_subtitle">Seu calendário nos óculos</string>
+    <string name="settings_section_access">Acesso ao calendário</string>
+    <string name="settings_grant">Permitir acesso ao calendário</string>
+    <string name="settings_grant_sub">Somente leitura. Nada sai do celular.</string>
+    <string name="settings_granted">Acesso ao calendário liberado</string>
+    <string name="settings_denied">Negado. Libere em Ajustes → Apps → Agenda para Nexus → Permissões.</string>
+    <string name="settings_section_horizon">Até quando olhar</string>
+    <string name="settings_section_calendars">Calendários</string>
+    <string name="settings_calendars_hint">Sem seleção, usa todos os calendários visíveis no celular.</string>
+    <string name="settings_no_calendars">Nenhum calendário neste celular.</string>
+    <string name="settings_section_filters">Filtros</string>
+    <string name="settings_all_day">Mostrar eventos de dia todo</string>
+    <string name="settings_hide_declined">Ocultar eventos recusados</string>
+    <string name="settings_section_plugin">Plugin</string>
+    <string name="settings_on">Ligado</string>
+    <string name="settings_off">Desligado</string>
+    <string name="settings_horizon_days">%1$d dias</string>
+    <string name="settings_horizon_day">1 dia</string>
+</resources>

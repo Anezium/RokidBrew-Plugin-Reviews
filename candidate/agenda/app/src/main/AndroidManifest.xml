@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- The whole data layer: the phone's calendar provider, read-only. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- Deliberately no POST_NOTIFICATIONS: plugin foreground services must stay
+         invisible; the Rokid Nexus hub notification is the single user-facing one. -->
+
+    <queries>
+        <intent>
+            <action android:name="com.anezium.rokidbus.action.HUB" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:localeConfig="@xml/locales_config"
+        android:theme="@style/Theme.Agenda">
+
+        <!-- Headless: exported so the hub can open it by explicit component,
+             with no intent-filter, so it never reaches a launcher. -->
+        <activity
+            android:name=".AgendaActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize" />
+
+        <service
+            android:name=".AgendaPluginService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="glasses-session" />
+            <intent-filter>
+                <action android:name="com.anezium.rokidbus.action.PLUGIN" />
+            </intent-filter>
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.ID"
+                android:value="agenda" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.DISPLAY_NAME"
+                android:value="Agenda" />
+            <!-- Both icon declarations on purpose: the built-in key is the only
+                 one that can render on the glasses launcher, the drawable is the
+                 phone-side mark. -->
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.ICON"
+                android:value="calendar" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.ICON_DRAWABLE"
+                android:resource="@drawable/nexus_glyph_agenda" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.API_VERSION"
+                android:value="3" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.CAPABILITIES"
+                android:value="surfaces" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.RECEIVE_PREFIXES"
+                android:value="/plugin/agenda,/system/plugin" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.SETTINGS_ACTIVITY"
+                android:value=".AgendaActivity" />
+            <meta-data
+                android:name="com.anezium.rokidbus.plugin.LAUNCHABLE"
+                android:value="true" />
+        </service>
+    </application>
+</manifest>

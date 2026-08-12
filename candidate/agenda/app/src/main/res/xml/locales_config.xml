@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The languages this plugin ships. Declaring them is what puts Agenda in the
+     Android per-app language picker (Settings > Apps > Agenda > Language) and
+     lets a wearer read the HUD in English on a phone set to another locale.
+     English is the default and the fallback for every unlisted locale. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android"
+    android:defaultLocale="en">
+    <locale android:name="en" />
+    <locale android:name="pt-BR" />
+</locale-config>
