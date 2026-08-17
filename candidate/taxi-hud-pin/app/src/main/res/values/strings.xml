@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Taxi Plate</string>
-    <string name="app_description">Universal Rokid Nexus plugin that extracts rides from configurable app notifications, shows a launcher card, and keeps a corner PIN visible.</string>
-    <string name="plugin_header_subtitle">Ride PIN for Rokid Nexus · v%1$s</string>
+    <string name="app_description">Universal Rokid Nexus plugin that extracts rides from configurable app notifications, shows a launcher card, and keeps a corner pin visible.</string>
+    <string name="plugin_header_subtitle">Ride pin for Rokid Nexus · v%1$s</string>
     <string name="notification_channel_name">Current Taxi Plate ride</string>
     <string name="notification_channel_description">Silent notification with the current ride details</string>
 
@@ -27,7 +27,26 @@
     <string name="section_setup">Setup</string>
     <string name="section_ride_tools">Ride</string>
     <string name="section_diagnostics">Diagnostics</string>
+    <string name="section_backup">Backup and restore</string>
     <string name="section_plugin">Plugin</string>
+
+    <string name="backup_privacy_warning">The encrypted backup contains Taxi Plate settings, imported adapters, package permissions, auto-pin preference, and language. It does not contain current ride data, history, notification logs, or Nexus system permissions. Keep the file and password private.</string>
+    <string name="export_settings">Export settings</string>
+    <string name="import_settings">Import settings</string>
+    <string name="backup_password_export_message">Choose a password of at least 8 characters. It is not stored and cannot be recovered.</string>
+    <string name="backup_password_import_message">Enter the password used when this backup was created.</string>
+    <string name="backup_password_hint">Backup password</string>
+    <string name="backup_password_repeat_hint">Repeat password</string>
+    <string name="backup_password_invalid">Passwords must match and contain at least 8 characters</string>
+    <string name="backup_password_required">Enter the backup password</string>
+    <string name="read_backup">Read backup</string>
+    <string name="import_settings_confirm_title">Replace Taxi Plate settings?</string>
+    <string name="import_settings_confirm_body">Imported adapters, adapter and package choices, auto-pin preference, and language will be replaced. Current ride data and logs will not be changed.</string>
+    <string name="import_settings_confirm">Import</string>
+    <string name="settings_exported">Encrypted settings backup saved</string>
+    <string name="settings_imported">Taxi Plate settings restored</string>
+    <string name="backup_failed">Backup operation failed: %1$s</string>
+    <string name="backup_file_too_large">Backup file exceeds 1 MB</string>
 
     <string name="continue_setup">Continue setup</string>
     <string name="language_title">Language</string>
@@ -36,15 +55,19 @@
     <string name="language_english">English</string>
     <string name="language_russian">Russian</string>
     <string name="auto_trip_pin_title">Show arrival timer automatically</string>
-    <string name="auto_trip_pin_subtitle">Create the small glasses PIN when a trip starts</string>
+    <string name="auto_trip_pin_subtitle">Create the small glasses pin when a trip starts</string>
     <string name="open_nexus">Open Rokid Nexus</string>
     <string name="open_nexus_subtitle">Plugin access, connection, and settings</string>
     <string name="open_notification_access">Notification access</string>
     <string name="open_notification_access_subtitle">Allow reading notifications from ride apps</string>
+    <string name="limit_notification_access">How to limit notification access</string>
+    <string name="limit_notification_access_subtitle">App filters, Android settings, and profile limits</string>
+    <string name="notification_access_guide_title">Limit what Taxi Plate can read</string>
+    <string name="notification_access_guide_body">1. Use the package switches under Notification adapters. Taxi Plate checks them before notification text reaches parsing or diagnostics. The switch covers notifications Android delivers from personal, work, and private profiles.\n\n2. The button below opens Android’s notification-access details specifically for Taxi Plate. You can also revoke access completely there.\n\n3. Taxi Plate’s system page has four categories: Notifications, Conversations, Real-time, and Silent. Open See all apps to allow or block notification delivery from each app for this listener. These Android controls are the system-level boundary; the package switches inside Taxi Plate provide an additional filter.\n\n4. Keep Taxi Plate in the personal profile. Android does not run notification listeners inside a work profile, and a work administrator may block notifications from crossing profiles.\n\n5. Private Space is separate and is stopped while locked. Taxi Plate can process private-profile notifications only when Android exposes them to the personal-profile listener.</string>
     <string name="enable_android_notifications">Enable Android notifications</string>
     <string name="enable_android_notifications_subtitle">Show the current ride on this phone</string>
     <string name="test_widget">Test widget</string>
-    <string name="test_widget_subtitle">Test the card and PIN on the glasses</string>
+    <string name="test_widget_subtitle">Test the card and pin on the glasses</string>
     <string name="sync_notification">Sync notifications</string>
     <string name="sync_notification_subtitle">Process active notifications again</string>
     <string name="export_notification_log">Export adapter logs</string>
@@ -57,6 +80,8 @@
     <string name="adapter_builtin">built in</string>
     <string name="adapter_imported">imported</string>
     <string name="adapter_summary">%1$s · %2$s</string>
+    <string name="package_access_profiles_note">Choose exactly which package names Taxi Plate may parse. This check happens before parsing and diagnostic logging and applies to any matching notification Android delivers from personal, work, or private profiles.</string>
+    <string name="package_access_row_subtitle">Allow parsing and local diagnostics for this package</string>
     <string name="adapter_on">ON</string>
     <string name="adapter_off">OFF</string>
     <string name="enable_adapter">Enable adapter</string>
@@ -67,6 +92,9 @@
     <string name="reset_adapters_confirm">Reset</string>
     <string name="adapters_reset_done">Built-in adapters restored</string>
     <string name="adapters_imported">Adapters imported: %1$d</string>
+    <string name="adapters_imported_with_packages">Adapters imported: %1$d · packages allowed: %2$d</string>
+    <string name="import_package_confirmation_title">Import %1$d adapter(s): choose packages to parse</string>
+    <string name="import_package_confirmation_confirm">Import selected</string>
     <string name="adapters_import_failed">Could not import JSON: %1$s</string>
     <string name="import_file_unavailable">File is unavailable</string>
     <string name="import_file_too_large">File exceeds 256 KB</string>

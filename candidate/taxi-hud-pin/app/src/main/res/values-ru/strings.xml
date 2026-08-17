@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Taxi Plate</string>
-    <string name="app_description">Универсальный плагин Rokid Nexus: извлекает поездки из уведомлений настраиваемых приложений, показывает карточку в лаунчере и PIN в углу.</string>
-    <string name="plugin_header_subtitle">Пин поездки для Rokid Nexus · v%1$s</string>
+    <string name="app_description">Универсальный плагин Rokid Nexus: извлекает поездки из уведомлений настраиваемых приложений, показывает карточку в лаунчере и закреп в углу.</string>
+    <string name="plugin_header_subtitle">Закреп поездки для Rokid Nexus · v%1$s</string>
     <string name="notification_channel_name">Текущая поездка Taxi Plate</string>
     <string name="notification_channel_description">Тихое уведомление с данными текущей поездки</string>
 
@@ -27,7 +27,26 @@
     <string name="section_setup">Настройка</string>
     <string name="section_ride_tools">Поездка</string>
     <string name="section_diagnostics">Диагностика</string>
+    <string name="section_backup">Резервная копия</string>
     <string name="section_plugin">Плагин</string>
+
+    <string name="backup_privacy_warning">Зашифрованная копия содержит настройки Taxi Plate, импортированные адаптеры, разрешения пакетов, настройку автоматического закрепа и язык. Текущая поездка, история, логи уведомлений и системные разрешения Nexus в неё не входят. Храните файл и пароль в секрете.</string>
+    <string name="export_settings">Экспортировать настройки</string>
+    <string name="import_settings">Импортировать настройки</string>
+    <string name="backup_password_export_message">Задайте пароль не короче 8 символов. Он нигде не сохраняется и не может быть восстановлен.</string>
+    <string name="backup_password_import_message">Введите пароль, заданный при создании этой копии.</string>
+    <string name="backup_password_hint">Пароль копии</string>
+    <string name="backup_password_repeat_hint">Повторите пароль</string>
+    <string name="backup_password_invalid">Пароли должны совпадать и содержать не менее 8 символов</string>
+    <string name="backup_password_required">Введите пароль резервной копии</string>
+    <string name="read_backup">Прочитать копию</string>
+    <string name="import_settings_confirm_title">Заменить настройки Taxi Plate?</string>
+    <string name="import_settings_confirm_body">Импортированные адаптеры, выбор адаптеров и пакетов, настройка автоматического закрепа и язык будут заменены. Текущая поездка и логи не изменятся.</string>
+    <string name="import_settings_confirm">Импортировать</string>
+    <string name="settings_exported">Зашифрованная копия настроек сохранена</string>
+    <string name="settings_imported">Настройки Taxi Plate восстановлены</string>
+    <string name="backup_failed">Ошибка резервной копии: %1$s</string>
+    <string name="backup_file_too_large">Файл резервной копии превышает 1 МБ</string>
 
     <string name="continue_setup">Продолжить настройку</string>
     <string name="language_title">Язык</string>
@@ -36,15 +55,19 @@
     <string name="language_english">Английский</string>
     <string name="language_russian">Русский</string>
     <string name="auto_trip_pin_title">Показывать таймер прибытия автоматически</string>
-    <string name="auto_trip_pin_subtitle">Создавать маленький пин на очках в начале поездки</string>
+    <string name="auto_trip_pin_subtitle">Создавать маленький закреп на очках в начале поездки</string>
     <string name="open_nexus">Открыть Rokid Nexus</string>
     <string name="open_nexus_subtitle">Доступ, подключение и параметры плагинов</string>
     <string name="open_notification_access">Доступ к уведомлениям</string>
     <string name="open_notification_access_subtitle">Разрешить чтение уведомлений приложений такси</string>
+    <string name="limit_notification_access">Как ограничить доступ к уведомлениям</string>
+    <string name="limit_notification_access_subtitle">Фильтры приложений, настройки Android и профили</string>
+    <string name="notification_access_guide_title">Ограничение доступа Taxi Plate</string>
+    <string name="notification_access_guide_body">1. Используйте переключатели пакетов в разделе «Адаптеры уведомлений». Taxi Plate проверяет их до передачи текста в парсер или диагностический журнал. Переключатель действует для уведомлений, которые Android передаёт из личного, рабочего и приватного профилей.\n\n2. Кнопка ниже открывает системные настройки доступа к уведомлениям именно для Taxi Plate. Там же доступ можно отозвать полностью.\n\n3. На системном экране Taxi Plate доступны четыре категории: «Уведомления», «Разговоры», «В реальном времени» и «Без звука». Откройте «Посмотреть все приложения», чтобы отдельно разрешить или запретить передачу уведомлений каждого приложения этому listener. Это системное ограничение; переключатели пакетов внутри Taxi Plate служат дополнительным фильтром.\n\n4. Оставьте Taxi Plate в личном профиле. Android не запускает notification listener внутри рабочего профиля, а администратор рабочего профиля может запретить передачу уведомлений между профилями.\n\n5. Private Space является отдельным профилем и останавливается, пока заблокирован. Taxi Plate может обработать его уведомления, только если Android передаёт их listener личного профиля.</string>
     <string name="enable_android_notifications">Разрешить уведомления Android</string>
     <string name="enable_android_notifications_subtitle">Показывать текущую поездку на телефоне</string>
     <string name="test_widget">Тестовый виджет</string>
-    <string name="test_widget_subtitle">Проверить карточку и пин на очках</string>
+    <string name="test_widget_subtitle">Проверить карточку и закреп на очках</string>
     <string name="sync_notification">Синхронизировать уведомления</string>
     <string name="sync_notification_subtitle">Повторно обработать активные уведомления</string>
     <string name="export_notification_log">Экспорт логов адаптеров</string>
@@ -57,6 +80,8 @@
     <string name="adapter_builtin">встроенный</string>
     <string name="adapter_imported">импортированный</string>
     <string name="adapter_summary">%1$s · %2$s</string>
+    <string name="package_access_profiles_note">Выберите пакеты, уведомления которых Taxi Plate может парсить. Проверка выполняется до парсинга и записи диагностического лога и действует на совпадающие уведомления, которые Android передаёт из личного, рабочего или приватного профиля.</string>
+    <string name="package_access_row_subtitle">Разрешить парсинг и локальную диагностику этого пакета</string>
     <string name="adapter_on">ВКЛ</string>
     <string name="adapter_off">ВЫКЛ</string>
     <string name="enable_adapter">Включить адаптер</string>
@@ -67,6 +92,9 @@
     <string name="reset_adapters_confirm">Сбросить</string>
     <string name="adapters_reset_done">Восстановлен встроенный набор адаптеров</string>
     <string name="adapters_imported">Импортировано адаптеров: %1$d</string>
+    <string name="adapters_imported_with_packages">Импортировано адаптеров: %1$d · разрешено пакетов: %2$d</string>
+    <string name="import_package_confirmation_title">Импорт адаптеров: %1$d. Выберите пакеты для парсинга</string>
+    <string name="import_package_confirmation_confirm">Импортировать выбранное</string>
     <string name="adapters_import_failed">Не удалось импортировать JSON: %1$s</string>
     <string name="import_file_unavailable">Файл недоступен</string>
     <string name="import_file_too_large">Файл превышает 256 КБ</string>

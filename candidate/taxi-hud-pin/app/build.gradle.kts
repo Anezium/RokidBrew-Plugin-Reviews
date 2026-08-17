@@ -12,8 +12,8 @@ android {
         applicationId = "com.havoc.rokid.plugin.taxihudpin"
         minSdk = 31
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.6.2"
+        versionCode = 17
+        versionName = "0.6.5"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -52,6 +52,7 @@ rootProject.tasks.register("packageTaxiHudDebug") {
 dependencies {
     implementation(libs.androidx.core)
     implementation(libs.gson)
+    implementation(libs.re2j)
     implementation(libs.rokid.nexus.bus.client)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)

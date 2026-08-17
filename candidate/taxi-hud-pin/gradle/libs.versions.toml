@@ -2,6 +2,7 @@
 agp = "9.2.1"
 junit = "4.13.2"
 gson = "2.10.1"
+re2j = "1.8"
 androidxCore = "1.16.0"
 robolectric = "4.16.1"
 nexusSdk = "sdk-v0.15.0"
@@ -9,6 +10,7 @@ nexusSdk = "sdk-v0.15.0"
 [libraries]
 junit = { module = "junit:junit", version.ref = "junit" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+re2j = { module = "com.google.re2j:re2j", version.ref = "re2j" }
 androidx-core = { module = "androidx.core:core", version.ref = "androidxCore" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 rokid-nexus-bus-client = { module = "com.github.Anezium.Rokid-Nexus:bus-client", version.ref = "nexusSdk" }

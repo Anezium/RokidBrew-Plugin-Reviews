@@ -41,6 +41,8 @@ public final class NexusPluginContractTest {
         assertTrue(activity.contains("NexusUi.INSTANCE.contentColumn"));
         assertTrue(activity.contains("NexusUi.INSTANCE.uninstallCard"));
         assertTrue(activity.contains("Intent.ACTION_DELETE"));
+        assertTrue(activity.contains("setMultiChoiceItems"));
+        assertTrue(activity.contains("showNotificationAccessGuide"));
     }
 
     @Test
@@ -123,6 +125,15 @@ public final class NexusPluginContractTest {
         assertTrue(locales.contains("android:name=\"ru\""));
         assertTrue(english.contains("<string name=\"language_title\">Language</string>"));
         assertTrue(russian.contains("<string name=\"language_title\">Язык</string>"));
+    }
+
+    @Test
+    public void builtInAdapterBundleUsesRequestedAuthor() throws Exception {
+        String bundle = read(Path.of(
+                "src", "main", "assets", "adapters",
+                "builtin_notification_adapters.json"));
+
+        assertTrue(bundle.contains("\"author\": \"Zhilin\""));
     }
 
     private static String read(Path path) throws Exception {
