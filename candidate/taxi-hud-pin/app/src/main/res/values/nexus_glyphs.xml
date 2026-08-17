@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="nexus_glyphs">
+        <item>taxi-plate|M2,8H6V12H2Z M10,8H14V12H10Z M18,8H22V12H18Z M6,12H10V16H6Z M14,12H18V16H14Z</item>
+    </string-array>
+</resources>

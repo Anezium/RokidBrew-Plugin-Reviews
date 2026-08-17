@@ -1,0 +1,49 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "taxi-hud-pin-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Validate tag and changelog
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#taxi-hud-pin-v}"
+          declared="$(sed -nE 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' app/build.gradle.kts)"
+          test "$version" = "$declared"
+          grep -Fqx "## $version" CHANGELOG.md
+      - name: Decode permanent release key
+        shell: bash
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_KEYSTORE_B64"
+          key="$RUNNER_TEMP/taxi-plate-release.p12"
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$key"
+          echo "NEXUS_RELEASE_KEYSTORE=$key" >> "$GITHUB_ENV"
+      - name: Build signed release
+        env:
+          NEXUS_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          NEXUS_RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: ./gradlew :phone:testDebugUnitTest :phone:lintDebug packageTaxiHudRelease -PrequireReleaseSigning=true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" build/outputs/taxi-hud/taxi-hud-pin-phone-release.apk --generate-notes --latest=false

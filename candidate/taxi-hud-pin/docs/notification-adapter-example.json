@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "id": "example.local-cab-bundle",
+    "displayName": "Local Cab adapters",
+    "author": "Example",
+    "version": 1
+  },
+  "adapters": [
+    {
+      "id": "local-cab",
+      "displayName": "Local Cab",
+      "enabled": true,
+      "packages": ["com.example.localcab"],
+      "eventRules": [
+        {"event": "STARTED", "pattern": "trip started", "ignoreCase": true},
+        {"event": "WAITING", "pattern": "driver is waiting", "ignoreCase": true},
+        {"event": "ENDED", "pattern": "trip complete", "ignoreCase": true},
+        {"event": "CANCELLED", "pattern": "trip cancelled", "ignoreCase": true},
+        {"event": "SEARCHING", "pattern": "finding a driver", "ignoreCase": true}
+      ],
+      "fieldRules": [
+        {
+          "field": "PLATE",
+          "pattern": "plate[=: ]+([A-Z0-9 ]+)",
+          "group": 1,
+          "ignoreCase": true,
+          "transforms": ["TRIM", "REMOVE_WHITESPACE", "UPPERCASE", "NORMALIZE_PLATE_LETTERS"]
+        },
+        {
+          "field": "VEHICLE",
+          "pattern": "car[=: ]+(.+?)(?=\\s+plate[=: ])",
+          "group": 1,
+          "ignoreCase": true,
+          "transforms": ["TRIM"]
+        },
+        {
+          "field": "ARRIVAL_MINUTES",
+          "pattern": "eta[=: ]+(\\d+)",
+          "group": 1,
+          "ignoreCase": true,
+          "transforms": ["TRIM"]
+        },
+        {
+          "field": "WAITING_MINUTES",
+          "pattern": "waiting[=: ]+(\\d+)",
+          "group": 1,
+          "ignoreCase": true,
+          "transforms": ["TRIM"]
+        }
+      ],
+      "truncateBeforePatterns": ["support:"],
+      "activeWhenAny": ["PLATE", "ARRIVAL_MINUTES"],
+      "requiredWithPlate": ["VEHICLE"],
+      "pinTtlMs": 1800000
+    }
+  ]
+}

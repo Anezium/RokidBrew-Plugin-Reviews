@@ -1,0 +1,112 @@
+<resources>
+    <string name="app_name">Taxi Plate</string>
+    <string name="app_description">Universal Rokid Nexus plugin that extracts rides from configurable app notifications, shows a launcher card, and keeps a corner PIN visible.</string>
+    <string name="plugin_header_subtitle">Ride PIN for Rokid Nexus · v%1$s</string>
+    <string name="notification_channel_name">Current Taxi Plate ride</string>
+    <string name="notification_channel_description">Silent notification with the current ride details</string>
+
+    <string name="status_notification_listener">App notification access</string>
+    <string name="status_notification_posting">Taxi Plate Android notifications</string>
+    <string name="status_nexus_app">Rokid Nexus</string>
+    <string name="status_nexus_plugin">Nexus plugin access</string>
+    <string name="status_nexus_link">Nexus glasses connection</string>
+    <string name="status_package_version">Package and version</string>
+    <string name="status_row">%1$s: %2$s</string>
+    <string name="status_enabled">enabled</string>
+    <string name="status_disabled">not enabled</string>
+    <string name="status_unknown">unknown</string>
+    <string name="nexus_plugin_approved">approved</string>
+    <string name="nexus_plugin_pending">awaiting approval</string>
+    <string name="nexus_plugin_denied">denied</string>
+    <string name="nexus_plugin_error">registration error (%1$d)</string>
+    <string name="nexus_link_disconnected">glasses disconnected</string>
+    <string name="nexus_link_control_ready">HUD channel ready</string>
+    <string name="nexus_link_data_ready">Nexus channels ready</string>
+
+    <string name="section_status">Status</string>
+    <string name="section_setup">Setup</string>
+    <string name="section_ride_tools">Ride</string>
+    <string name="section_diagnostics">Diagnostics</string>
+    <string name="section_plugin">Plugin</string>
+
+    <string name="continue_setup">Continue setup</string>
+    <string name="language_title">Language</string>
+    <string name="language_dialog_title">Taxi Plate language</string>
+    <string name="language_system">Use phone language</string>
+    <string name="language_english">English</string>
+    <string name="language_russian">Russian</string>
+    <string name="auto_trip_pin_title">Show arrival timer automatically</string>
+    <string name="auto_trip_pin_subtitle">Create the small glasses PIN when a trip starts</string>
+    <string name="open_nexus">Open Rokid Nexus</string>
+    <string name="open_nexus_subtitle">Plugin access, connection, and settings</string>
+    <string name="open_notification_access">Notification access</string>
+    <string name="open_notification_access_subtitle">Allow reading notifications from ride apps</string>
+    <string name="enable_android_notifications">Enable Android notifications</string>
+    <string name="enable_android_notifications_subtitle">Show the current ride on this phone</string>
+    <string name="test_widget">Test widget</string>
+    <string name="test_widget_subtitle">Test the card and PIN on the glasses</string>
+    <string name="sync_notification">Sync notifications</string>
+    <string name="sync_notification_subtitle">Process active notifications again</string>
+    <string name="export_notification_log">Export adapter logs</string>
+    <string name="clear_notification_log">Clear logs</string>
+    <string name="export_log_subtitle">Share the local adapter event log</string>
+    <string name="export_log_chooser">Export Taxi Plate logs</string>
+    <string name="log_privacy_warning">Logs may contain addresses, prices, and other data from app notifications. They are stored only on this phone.</string>
+    <string name="adapters_heading">Notification adapters</string>
+    <string name="adapter_row">%1$s\n%2$s · %3$s</string>
+    <string name="adapter_builtin">built in</string>
+    <string name="adapter_imported">imported</string>
+    <string name="adapter_summary">%1$s · %2$s</string>
+    <string name="adapter_on">ON</string>
+    <string name="adapter_off">OFF</string>
+    <string name="enable_adapter">Enable adapter</string>
+    <string name="disable_adapter">Disable adapter</string>
+    <string name="import_adapters">Import JSON</string>
+    <string name="reset_adapters">Reset imported adapters</string>
+    <string name="reset_adapters_confirmation">Delete every imported definition and restore the built-in adapters?</string>
+    <string name="reset_adapters_confirm">Reset</string>
+    <string name="adapters_reset_done">Built-in adapters restored</string>
+    <string name="adapters_imported">Adapters imported: %1$d</string>
+    <string name="adapters_import_failed">Could not import JSON: %1$s</string>
+    <string name="import_file_unavailable">File is unavailable</string>
+    <string name="import_file_too_large">File exceeds 256 KB</string>
+    <string name="setup_ready">Setup complete</string>
+    <string name="approve_plugin_in_nexus">Open Plugin access in Rokid Nexus and approve Taxi Plate</string>
+    <string name="nexus_not_installed">Rokid Nexus is not installed</string>
+    <string name="test_widget_sent">Test widget sent through Nexus</string>
+    <string name="sync_notification_sent">Current notification sent through Nexus</string>
+    <string name="sync_listener_unavailable">Notification access service is not connected</string>
+    <string name="sync_no_configured_notifications">No active notifications from configured apps</string>
+    <string name="sync_no_current_ride">No current ride found in notifications</string>
+    <string name="sync_notification_failed">Could not sync the notification</string>
+    <string name="export_failed">Could not export logs</string>
+    <string name="log_cleared">Logs cleared</string>
+
+    <string name="hud_vehicle_unknown">Vehicle details pending</string>
+    <string name="hud_plate_unknown">PLATE PENDING</string>
+    <string name="hud_waiting_minutes">Waiting: %1$s min</string>
+    <string name="hud_waiting">Waiting</string>
+    <string name="hud_arrival_minutes">Arrives in: %1$s min</string>
+    <string name="hud_ride_started_seconds">Ride started · %1$d s</string>
+    <string name="hud_active_order">Ride active</string>
+    <string name="hud_no_active_notification">No active notification</string>
+    <string name="hud_recent_rides">Recent rides</string>
+    <string name="hud_history_empty">No ride history yet</string>
+    <string name="hud_tap_clear">tap · clear</string>
+    <string name="hud_clear_notification">Tap to Clear Notification</string>
+    <string name="hud_ride_ended">Ride ended</string>
+    <string name="hud_trip_in_progress">Ride in progress</string>
+    <string name="hud_trip_remaining_title">Until arrival</string>
+    <string name="hud_trip_remaining_status">Until arrival: %1$s</string>
+    <string name="hud_trip_minutes">%1$d min</string>
+    <string name="hud_trip_hours_minutes">%1$d h %2$d min</string>
+    <string name="hud_show_trip_timer">Show arrival timer</string>
+    <string-array name="test_vehicle_colors">
+        <item>White</item>
+        <item>Black</item>
+        <item>Gray</item>
+        <item>Blue</item>
+        <item>Red</item>
+        <item>Yellow</item>
+    </string-array>
+</resources>

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "metadata": {
+    "id": "builtin.ride-adapters",
+    "displayName": "Built-in ride notification adapters",
+    "author": "Taxi Plate",
+    "version": 1
+  },
+  "adapters": [
+    {
+      "id": "yandex-go",
+      "displayName": "Yandex Go",
+      "enabled": true,
+      "packages": ["ru.yandex.taxi", "ru.yandex.go"],
+      "eventRules": [
+        {"event": "STARTED", "pattern": "(?<![\\p{L}\\p{N}_])(?:водитель\\s+начал\\s+поездку|поездка\\s+началась)(?![\\p{L}\\p{N}_])", "ignoreCase": true},
+        {"event": "CANCELLED", "pattern": "(?<![\\p{L}\\p{N}_])(?:поездка|заказ)\\s+отмен(?:ена|ён|ен)(?![\\p{L}\\p{N}_])", "ignoreCase": true},
+        {"event": "ENDED", "pattern": "(?<![\\p{L}\\p{N}_])(?:оцените\\s+поездку|поездка\\s+завершена|спасибо\\s+за\\s+поездку)(?![\\p{L}\\p{N}_])", "ignoreCase": true},
+        {"event": "SEARCHING", "pattern": "(?:смотрим,?\\s+какие\\s+ближе|есть\\s+машины\\s+рядом|жд[её]м\\s+ответ|предложим\\s+им\\s+ваш\\s+заказ|ищем\\s+(?:машину|водителя)|подбираем\\s+машину)", "ignoreCase": true},
+        {"event": "WAITING", "pattern": "(?<![\\p{L}\\p{N}_])(?:водитель\\s+)?(?:ожидает|жд[её]т|вас\\s+ожидает)(?:\\D{0,12}\\d+\\s*мин)?", "ignoreCase": true}
+      ],
+      "fieldRules": [
+        {"field": "PLATE", "pattern": "(?<![A-ZА-ЯЁ0-9])([ABEKMHOPCTYXАВЕКМНОРСТУХ]\\s?\\d{3}\\s?[ABEKMHOPCTYXАВЕКМНОРСТУХ]{2}\\s?\\d{2,3})(?![A-ZА-ЯЁ0-9])", "group": 1, "ignoreCase": true, "transforms": ["TRIM", "REMOVE_WHITESPACE", "UPPERCASE", "NORMALIZE_PLATE_LETTERS"]},
+        {"field": "ARRIVAL_MINUTES", "pattern": "(\\d+(?:[\\s\\u00a0]*[–—-][\\s\\u00a0]*\\d+)?)[\\s\\u00a0]*мин(?:ут[ыа]?)?[\\s\\u00a0]+(?:и[\\s\\u00a0]+)?(?:приедет|подъедет)", "group": 1, "ignoreCase": true, "transforms": ["TRIM", "NORMALIZE_RANGE"]},
+        {"field": "ARRIVAL_MINUTES", "pattern": "(?:приедет|подъедет)[\\s\\u00a0]+(?:через[\\s\\u00a0]+)?(\\d+(?:[\\s\\u00a0]*[–—-][\\s\\u00a0]*\\d+)?)[\\s\\u00a0]*мин(?:ут[ыа]?)?", "group": 1, "ignoreCase": true, "transforms": ["TRIM", "NORMALIZE_RANGE"]},
+        {"field": "WAITING_MINUTES", "pattern": "(?:ожидает|жд[её]т(?:\\s+ещ[её])?|вас\\s+ожидает)\\D{0,12}(\\d+)\\s*мин", "group": 1, "ignoreCase": true, "transforms": ["TRIM"]},
+        {"field": "TRIP_DURATION", "pattern": "(?:до\\s+прибытия|ехать|осталось|в\\s+пути)[\\s:–—-]*((?:\\d+\\s*(?:ч(?:ас(?:а|ов)?)?\\.?|h(?:ours?)?)[\\s]*)?(?:\\d+\\s*(?:мин(?:ут[ыа]?)?\\.?|m(?:in(?:utes?)?)?\\.?)))", "group": 1, "ignoreCase": true, "transforms": ["TRIM"]},
+        {"field": "TRIP_DURATION", "pattern": "((?:\\d+\\s*(?:ч(?:ас(?:а|ов)?)?\\.?|h(?:ours?)?)[\\s]*)?(?:\\d+\\s*(?:мин(?:ут[ыа]?)?\\.?|m(?:in(?:utes?)?)?\\.?)))[\\s]*(?:до\\s+прибытия|ехать|осталось|в\\s+пути)", "group": 1, "ignoreCase": true, "transforms": ["TRIM"]},
+        {"field": "VEHICLE", "pattern": "(?:приедет|подъедет|едет)\\s+(?:к\\s+вам\\s+)?(.+?)(?=\\s+[ABEKMHOPCTYXАВЕКМНОРСТУХ]\\s?\\d{3}|\\s*,|\\s+номер|$)", "group": 1, "ignoreCase": true, "transforms": ["CLEAN_VEHICLE"]},
+        {"field": "VEHICLE", "pattern": "([\\p{L}\\d][\\p{L}\\d-]*(?:\\s+[\\p{L}\\d][\\p{L}\\d-]*){0,5})\\s+(?:приедет|подъедет|едет)", "group": 1, "ignoreCase": true, "transforms": ["CLEAN_VEHICLE"]},
+        {"field": "VEHICLE", "pattern": "(?m)(?:^|\\R)([^\\r\\n]{3,80}?)\\s+[ABEKMHOPCTYXАВЕКМНОРСТУХ]\\s?\\d{3}\\s?[ABEKMHOPCTYXАВЕКМНОРСТУХ]{2}\\s?\\d{2,3}(?=\\s|[.,]|$)", "group": 1, "ignoreCase": true, "transforms": ["CLEAN_VEHICLE"]},
+        {"field": "VEHICLE", "pattern": "(?m)^([^\\r\\n]{3,80})\\R\\s*[ABEKMHOPCTYXАВЕКМНОРСТУХ]\\s?\\d{3}\\s?[ABEKMHOPCTYXАВЕКМНОРСТУХ]{2}\\s?\\d{2,3}(?:\\s|$)", "group": 1, "ignoreCase": true, "transforms": ["CLEAN_VEHICLE"]}
+      ],
+      "truncateBeforePatterns": ["бесплатная\\s+отмена"],
+      "activeWhenAny": ["PLATE", "ARRIVAL_MINUTES"],
+      "requiredWithPlate": ["VEHICLE"],
+      "pinTtlMs": 1800000
+    }
+  ]
+}

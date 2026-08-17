@@ -1,0 +1,8 @@
+<resources>
+    <color name="ic_launcher_background">#030C06</color>
+    <color name="taxi_black">#020604</color>
+    <color name="taxi_green_dark">#123D2A</color>
+    <color name="taxi_green_bright">#39FF88</color>
+    <color name="taxi_green_soft">#9BFFBE</color>
+    <color name="taxi_green_text">#D5FFE3</color>
+</resources>

@@ -1,0 +1,112 @@
+<resources>
+    <string name="app_name">Taxi Plate</string>
+    <string name="app_description">Универсальный плагин Rokid Nexus: извлекает поездки из уведомлений настраиваемых приложений, показывает карточку в лаунчере и PIN в углу.</string>
+    <string name="plugin_header_subtitle">Пин поездки для Rokid Nexus · v%1$s</string>
+    <string name="notification_channel_name">Текущая поездка Taxi Plate</string>
+    <string name="notification_channel_description">Тихое уведомление с данными текущей поездки</string>
+
+    <string name="status_notification_listener">Доступ к уведомлениям приложений</string>
+    <string name="status_notification_posting">Уведомления Taxi Plate на Android</string>
+    <string name="status_nexus_app">Rokid Nexus</string>
+    <string name="status_nexus_plugin">Доступ плагина в Nexus</string>
+    <string name="status_nexus_link">Связь Nexus с очками</string>
+    <string name="status_package_version">Пакет и версия</string>
+    <string name="status_row">%1$s: %2$s</string>
+    <string name="status_enabled">включено</string>
+    <string name="status_disabled">не включено</string>
+    <string name="status_unknown">нет данных</string>
+    <string name="nexus_plugin_approved">разрешён</string>
+    <string name="nexus_plugin_pending">ожидает разрешения</string>
+    <string name="nexus_plugin_denied">запрещён</string>
+    <string name="nexus_plugin_error">ошибка регистрации (%1$d)</string>
+    <string name="nexus_link_disconnected">очки не подключены</string>
+    <string name="nexus_link_control_ready">канал HUD готов</string>
+    <string name="nexus_link_data_ready">каналы Nexus готовы</string>
+
+    <string name="section_status">Состояние</string>
+    <string name="section_setup">Настройка</string>
+    <string name="section_ride_tools">Поездка</string>
+    <string name="section_diagnostics">Диагностика</string>
+    <string name="section_plugin">Плагин</string>
+
+    <string name="continue_setup">Продолжить настройку</string>
+    <string name="language_title">Язык</string>
+    <string name="language_dialog_title">Язык Taxi Plate</string>
+    <string name="language_system">Использовать язык телефона</string>
+    <string name="language_english">Английский</string>
+    <string name="language_russian">Русский</string>
+    <string name="auto_trip_pin_title">Показывать таймер прибытия автоматически</string>
+    <string name="auto_trip_pin_subtitle">Создавать маленький пин на очках в начале поездки</string>
+    <string name="open_nexus">Открыть Rokid Nexus</string>
+    <string name="open_nexus_subtitle">Доступ, подключение и параметры плагинов</string>
+    <string name="open_notification_access">Доступ к уведомлениям</string>
+    <string name="open_notification_access_subtitle">Разрешить чтение уведомлений приложений такси</string>
+    <string name="enable_android_notifications">Разрешить уведомления Android</string>
+    <string name="enable_android_notifications_subtitle">Показывать текущую поездку на телефоне</string>
+    <string name="test_widget">Тестовый виджет</string>
+    <string name="test_widget_subtitle">Проверить карточку и пин на очках</string>
+    <string name="sync_notification">Синхронизировать уведомления</string>
+    <string name="sync_notification_subtitle">Повторно обработать активные уведомления</string>
+    <string name="export_notification_log">Экспорт логов адаптеров</string>
+    <string name="clear_notification_log">Очистить логи</string>
+    <string name="export_log_subtitle">Поделиться локальным журналом адаптеров</string>
+    <string name="export_log_chooser">Экспорт логов Taxi Plate</string>
+    <string name="log_privacy_warning">Логи могут содержать адреса, стоимость и другие данные из уведомлений приложений. Они хранятся только на этом телефоне.</string>
+    <string name="adapters_heading">Адаптеры уведомлений</string>
+    <string name="adapter_row">%1$s\n%2$s · %3$s</string>
+    <string name="adapter_builtin">встроенный</string>
+    <string name="adapter_imported">импортированный</string>
+    <string name="adapter_summary">%1$s · %2$s</string>
+    <string name="adapter_on">ВКЛ</string>
+    <string name="adapter_off">ВЫКЛ</string>
+    <string name="enable_adapter">Включить адаптер</string>
+    <string name="disable_adapter">Выключить адаптер</string>
+    <string name="import_adapters">Импортировать JSON</string>
+    <string name="reset_adapters">Сбросить импортированные адаптеры</string>
+    <string name="reset_adapters_confirmation">Удалить все импортированные определения и вернуть встроенные адаптеры?</string>
+    <string name="reset_adapters_confirm">Сбросить</string>
+    <string name="adapters_reset_done">Восстановлен встроенный набор адаптеров</string>
+    <string name="adapters_imported">Импортировано адаптеров: %1$d</string>
+    <string name="adapters_import_failed">Не удалось импортировать JSON: %1$s</string>
+    <string name="import_file_unavailable">Файл недоступен</string>
+    <string name="import_file_too_large">Файл превышает 256 КБ</string>
+    <string name="setup_ready">Настройка завершена</string>
+    <string name="approve_plugin_in_nexus">В Rokid Nexus откройте Plugin access и разрешите Taxi Plate</string>
+    <string name="nexus_not_installed">Rokid Nexus не установлен</string>
+    <string name="test_widget_sent">Тестовый виджет отправлен через Nexus</string>
+    <string name="sync_notification_sent">Текущее уведомление отправлено через Nexus</string>
+    <string name="sync_listener_unavailable">Сервис доступа к уведомлениям не подключён</string>
+    <string name="sync_no_configured_notifications">Нет активных уведомлений настроенных приложений</string>
+    <string name="sync_no_current_ride">В уведомлениях нет текущей поездки</string>
+    <string name="sync_notification_failed">Не удалось синхронизировать уведомление</string>
+    <string name="export_failed">Не удалось экспортировать логи</string>
+    <string name="log_cleared">Логи очищены</string>
+
+    <string name="hud_vehicle_unknown">Машина уточняется</string>
+    <string name="hud_plate_unknown">НОМЕР УТОЧНЯЕТСЯ</string>
+    <string name="hud_waiting_minutes">Ожидает: %1$s мин</string>
+    <string name="hud_waiting">Ожидает</string>
+    <string name="hud_arrival_minutes">Приедет: %1$s мин</string>
+    <string name="hud_ride_started_seconds">Поездка началась · %1$d с</string>
+    <string name="hud_active_order">Заказ активен</string>
+    <string name="hud_no_active_notification">Нет активного уведомления</string>
+    <string name="hud_recent_rides">Последние поездки</string>
+    <string name="hud_history_empty">История пока пуста</string>
+    <string name="hud_tap_clear">нажать · очистить</string>
+    <string name="hud_clear_notification">Нажмите, чтобы убрать уведомление</string>
+    <string name="hud_ride_ended">Поездка завершена</string>
+    <string name="hud_trip_in_progress">Поездка идёт</string>
+    <string name="hud_trip_remaining_title">До прибытия</string>
+    <string name="hud_trip_remaining_status">До прибытия: %1$s</string>
+    <string name="hud_trip_minutes">%1$d мин.</string>
+    <string name="hud_trip_hours_minutes">%1$d ч. %2$d мин.</string>
+    <string name="hud_show_trip_timer">Показать таймер прибытия</string>
+    <string-array name="test_vehicle_colors">
+        <item>Белый</item>
+        <item>Чёрный</item>
+        <item>Серый</item>
+        <item>Синий</item>
+        <item>Красный</item>
+        <item>Жёлтый</item>
+    </string-array>
+</resources>

@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 77,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/77",
+    "title": "plugins-nexus: Taxi Plate 0.6.5",
+    "headSha": "4066a138ce9d1a44ec901e6fcaa2080ede438353",
+    "baseSha": "94c30d17e5f75c14a445d3df7469e4677ace9a3e"
+  },
+  "descriptorPath": "plugins-nexus/taxi-hud-pin.json",
+  "plugin": {
+    "id": "taxi-hud-pin",
+    "name": "Taxi Plate",
+    "version": "0.6.5"
+  },
+  "previous": {
+    "pluginId": "taxi-hud-pin",
+    "pluginName": "Taxi Plate",
+    "version": "0.6.2",
+    "repository": "azhilin246/rokid-nexus-taxi-plate",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-taxi-plate",
+    "tag": "taxi-hud-pin-v0.6.2",
+    "commit": "e5afc87e0e2e5e1256d7282650084c67a232a49d"
+  },
+  "proposed": {
+    "pluginId": "taxi-hud-pin",
+    "pluginName": "Taxi Plate",
+    "version": "0.6.5",
+    "repository": "azhilin246/rokid-nexus-taxi-plate",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-taxi-plate",
+    "tag": "taxi-hud-pin-v0.6.5",
+    "commit": "f90cb11afec82e9d8511e591de84bd5a6a4da341"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-77-taxi-hud-pin-f90cb11afe",
+    "head": "review-head/pr-77-taxi-hud-pin-f90cb11afe"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": null,
+    "ref": "main",
+    "commit": "9524706319db23c81144d2e393d767d12a14adae"
+  }
+}
