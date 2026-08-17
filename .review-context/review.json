@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 79,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/79",
+    "title": "plugins-nexus: OTPs 1.0.8",
+    "headSha": "685734a40b59528adb089a7f5fced2b74e6176d1",
+    "baseSha": "94c30d17e5f75c14a445d3df7469e4677ace9a3e"
+  },
+  "descriptorPath": "plugins-nexus/otps.json",
+  "plugin": {
+    "id": "otps",
+    "name": "OTPs",
+    "version": "1.0.8"
+  },
+  "previous": {
+    "pluginId": "otps",
+    "pluginName": "OTPs",
+    "version": "1.0.6",
+    "repository": "azhilin246/rokid-nexus-otps",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-otps",
+    "tag": "otps-v1.0.6",
+    "commit": "1026416b2cb24cff9f3f1592a031514f2f9a531a"
+  },
+  "proposed": {
+    "pluginId": "otps",
+    "pluginName": "OTPs",
+    "version": "1.0.8",
+    "repository": "azhilin246/rokid-nexus-otps",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-otps",
+    "tag": "otps-v1.0.8",
+    "commit": "7495a602825c4760cf2d55f5eca4690aae598b10"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-79-otps-7495a60282",
+    "head": "review-head/pr-79-otps-7495a60282"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": "sdk-v0.15.0",
+    "ref": "sdk-v0.15.0",
+    "commit": "5e74a3b62e7769dc1f5b6706253dc00b3bdedccc"
+  }
+}

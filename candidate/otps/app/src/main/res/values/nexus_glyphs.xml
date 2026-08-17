@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="nexus_glyphs">
+        <item>otps-key|M6.7,6.5 A5.5,5.5 0 0 1 11.6,9.5 L22,9.5 L22,14.5 L20.5,14.5 L20.5,18 L17.5,18 L17.5,14.5 L15,14.5 L15,18 L12,18 L12,14.2 A5.5,5.5 0 1 1 6.7,6.5 Z M6.7,9.5 A2.5,2.5 0 1 0 6.7,14.5 A2.5,2.5 0 1 0 6.7,9.5 Z</item>
+    </string-array>
+</resources>
