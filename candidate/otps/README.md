@@ -11,7 +11,11 @@ verification codes, and shows them on the glasses.
 - Opening OTPs from the Nexus glasses launcher shows the newest ten entries as
   `App: Code`.
 - The phone settings screen controls alert delivery, timeout, notification
-  access, history clearing, and uninstall.
+access, history clearing, and uninstall.
+
+The settings screen also provides password-encrypted **Export settings** and
+**Import settings** actions for alert enablement, auto close, and duration. Stored
+verification-code history is intentionally excluded from portable backups.
 
 All notification text and extracted codes are processed locally. The plugin has no
 Internet permission and keeps at most ten entries in private app storage. See

@@ -26,6 +26,16 @@ internal class OtpSettings(context: Context) {
             .apply()
     }
 
+    fun backup() = OtpSettingsBackup(enabled(), autoClose(), durationSeconds())
+
+    fun restore(backup: OtpSettingsBackup) {
+        prefs.edit()
+            .putBoolean(KEY_ENABLED, backup.enabled)
+            .putBoolean(KEY_AUTO_CLOSE, backup.autoClose)
+            .putInt(KEY_DURATION_SECONDS, backup.durationSeconds)
+            .commit()
+    }
+
     companion object {
         const val DEFAULT_DURATION_SECONDS = 12
         const val MIN_DURATION_SECONDS = 2
