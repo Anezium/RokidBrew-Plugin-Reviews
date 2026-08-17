@@ -1,0 +1,14 @@
+.gradle/
+.idea/
+.superpowers/
+.codex/
+openspec/
+**/build/
+build/
+local.properties
+*.iml
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key

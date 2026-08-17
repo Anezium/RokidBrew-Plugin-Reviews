@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "origin": {
+    "repository": "Anezium/RokidBrew-Registry",
+    "prNumber": 78,
+    "url": "https://github.com/Anezium/RokidBrew-Registry/pull/78",
+    "title": "plugins-nexus: Home Assistant 0.2.2",
+    "headSha": "32ae88c1766656cd574fb792f3d26a1d3cc0fd2a",
+    "baseSha": "94c30d17e5f75c14a445d3df7469e4677ace9a3e"
+  },
+  "descriptorPath": "plugins-nexus/home-assistant.json",
+  "plugin": {
+    "id": "home-assistant",
+    "name": "Home Assistant",
+    "version": "0.2.2"
+  },
+  "previous": {
+    "pluginId": "home-assistant",
+    "pluginName": "Home Assistant",
+    "version": "0.2.1",
+    "repository": "azhilin246/rokid-nexus-home-assistant",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-home-assistant",
+    "tag": "home-assistant-v0.2.1",
+    "commit": "6e6b9cd101987f0019dd2de88e48ec95893d67fa"
+  },
+  "proposed": {
+    "pluginId": "home-assistant",
+    "pluginName": "Home Assistant",
+    "version": "0.2.2",
+    "repository": "azhilin246/rokid-nexus-home-assistant",
+    "repositoryUrl": "https://github.com/azhilin246/rokid-nexus-home-assistant",
+    "tag": "home-assistant-v0.2.2",
+    "commit": "0d6b885efdb9fd357cda3b4bde4350dbd462b72f"
+  },
+  "reviewers": [
+    "codex",
+    "coderabbit",
+    "greptile"
+  ],
+  "reviewRepository": "Anezium/RokidBrew-Plugin-Reviews",
+  "branches": {
+    "base": "review-base/pr-78-home-assistant-0d6b885efd",
+    "head": "review-head/pr-78-home-assistant-0d6b885efd"
+  },
+  "context": {
+    "repository": "Anezium/Rokid-Nexus",
+    "declaredSdkTag": null,
+    "ref": "main",
+    "commit": "9524706319db23c81144d2e393d767d12a14adae"
+  }
+}

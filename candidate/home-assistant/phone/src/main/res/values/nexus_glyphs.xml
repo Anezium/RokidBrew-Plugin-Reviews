@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="nexus_glyphs">
+        <item>home-assistant|M2.5,12 L12,2.5 L21.5,12 M4,11 V21 H20 V11 M12,8.7 V17 M7.5,13.8 L11,17.3 M16.5,13.8 L13,17.3 M12,17 V21 M12,6.9 A0.9,0.9 0 1,1 12,8.7 A0.9,0.9 0 1,1 12,6.9 M7.5,12 A0.9,0.9 0 1,1 7.5,13.8 A0.9,0.9 0 1,1 7.5,12 M16.5,12 A0.9,0.9 0 1,1 16.5,13.8 A0.9,0.9 0 1,1 16.5,12</item>
+    </string-array>
+</resources>
