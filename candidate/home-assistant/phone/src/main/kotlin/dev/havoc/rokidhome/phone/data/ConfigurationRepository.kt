@@ -5,7 +5,17 @@ import dev.havoc.rokidhome.shared.model.*
 import dev.havoc.rokidhome.shared.validation.CanonicalData
 import dev.havoc.rokidhome.shared.validation.ConfigurationValidator
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 import java.util.UUID
+
+@Serializable
+data class ConfigurationBackup(
+    val pages: List<PageEntity>,
+    val widgets: List<WidgetEntity>,
+    val actions: List<ActionEntity>,
+    val bindings: List<BindingEntity>,
+    val contextRules: List<ContextRuleEntity>,
+)
 
 class ConfigurationRepository(private val database: AppDatabase) {
     private val dao = database.configurationDao()
@@ -161,6 +171,157 @@ class ConfigurationRepository(private val database: AppDatabase) {
 
     suspend fun currentPublished(): PublishedConfiguration? = dao.published()?.let {
         runCatching { CanonicalData.json.decodeFromString(PublishedConfiguration.serializer(), it.json) }.getOrNull()
+    }
+
+    suspend fun exportBackup(): ConfigurationBackup {
+        val pages = dao.pages()
+        return ConfigurationBackup(
+            pages = pages.map { it.page },
+            widgets = pages.flatMap { page -> page.widgets.map { it.widget } },
+            actions = pages.flatMap { page -> page.widgets.flatMap { it.actions } },
+            bindings = pages.flatMap { page -> page.widgets.flatMap { it.bindings } },
+            contextRules = dao.rules(),
+        )
+    }
+
+    suspend fun importBackup(backup: ConfigurationBackup) {
+        validateBackup(backup)
+        val imported = PublishedConfiguration(
+            configVersion = 1,
+            defaultPageId = backup.pages.minBy(PageEntity::position).id,
+            pages = backup.pages.sortedBy(PageEntity::position).map { page ->
+                PageConfig(
+                    page.id,
+                    page.name,
+                    backup.widgets
+                        .filter { it.pageId == page.id }
+                        .sortedBy(WidgetEntity::position)
+                        .map { widget -> decodeBackupWidget(widget, backup) },
+                )
+            },
+            contextRules = backup.contextRules.map {
+                ContextRule(
+                    it.id,
+                    it.enabled,
+                    it.conditionTemplate,
+                    it.pageId,
+                    it.priority,
+                    it.position,
+                    it.activateAfterMs,
+                    it.deactivateAfterMs,
+                )
+            },
+        )
+        val errors = ConfigurationValidator.validate(imported)
+        require(errors.isEmpty()) { errors.joinToString("\n") }
+        val signed = CanonicalData.withChecksum(imported)
+        database.withTransaction {
+            dao.clearPublished()
+            dao.clearRules()
+            dao.clearPages()
+            backup.pages.sortedBy(PageEntity::position).forEach { dao.putPage(it) }
+            backup.widgets.sortedWith(compareBy(WidgetEntity::pageId, WidgetEntity::position))
+                .forEach { dao.putWidget(it) }
+            if (backup.actions.isNotEmpty()) dao.putActions(backup.actions)
+            if (backup.bindings.isNotEmpty()) dao.putBindings(backup.bindings)
+            backup.contextRules.sortedBy(ContextRuleEntity::position).forEach { dao.putRule(it) }
+            dao.putPublished(
+                PublishedConfigEntity(
+                    version = signed.configVersion,
+                    checksum = signed.checksum,
+                    json = CanonicalData.json.encodeToString(
+                        PublishedConfiguration.serializer(),
+                        signed,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun decodeBackupWidget(
+        widget: WidgetEntity,
+        backup: ConfigurationBackup,
+    ): WidgetConfig {
+        val bindings = backup.bindings
+            .filter { it.widgetId == widget.id }
+            .associate { it.slot to decodeSource(it.json) }
+        val actions = backup.actions
+            .filter { it.widgetId == widget.id }
+            .associate {
+                it.slot to CanonicalData.json.decodeFromString(
+                    HomeAssistantAction.serializer(),
+                    it.json,
+                )
+            }
+        return WidgetConfig(
+            id = widget.id,
+            type = WidgetType.valueOf(widget.type),
+            label = bindings["label"],
+            primary = bindings["primary"],
+            secondary = bindings["secondary"],
+            state = bindings["state"],
+            progress = bindings["progress"],
+            minimum = bindings["minimum"],
+            maximum = bindings["maximum"],
+            step = bindings["step"],
+            action = actions["action"],
+            onAction = actions["on"],
+            offAction = actions["off"],
+        )
+    }
+
+    private fun validateBackup(backup: ConfigurationBackup) {
+        require(backup.pages.isNotEmpty() && backup.pages.size <= 64) {
+            "Backup must contain 1..64 pages"
+        }
+        require(backup.widgets.size <= 512) { "Backup contains too many widgets" }
+        require(backup.actions.size <= 1_536 && backup.bindings.size <= 4_096) {
+            "Backup contains too many widget fields"
+        }
+        require(backup.contextRules.size <= 256) { "Backup contains too many context rules" }
+
+        val pageIds = backup.pages.map(PageEntity::id).toSet()
+        require(pageIds.size == backup.pages.size) { "Backup contains duplicate page IDs" }
+        backup.pages.forEach {
+            require(it.id.length in 1..160 && it.name.length in 1..160) { "Invalid page" }
+        }
+
+        val widgetIds = backup.widgets.map(WidgetEntity::id).toSet()
+        require(widgetIds.size == backup.widgets.size) { "Backup contains duplicate widget IDs" }
+        backup.widgets.forEach {
+            require(it.id.length in 1..160 && it.pageId in pageIds) { "Invalid widget page" }
+            WidgetType.valueOf(it.type)
+        }
+        require(
+            backup.actions.map { it.widgetId to it.slot }.toSet().size == backup.actions.size,
+        ) { "Backup contains duplicate widget actions" }
+        backup.actions.forEach {
+            require(it.widgetId in widgetIds && it.slot.length in 1..32 && it.json.length <= 64_000) {
+                "Invalid widget action"
+            }
+            CanonicalData.json.decodeFromString(HomeAssistantAction.serializer(), it.json)
+        }
+        require(
+            backup.bindings.map { it.widgetId to it.slot }.toSet().size == backup.bindings.size,
+        ) { "Backup contains duplicate widget bindings" }
+        backup.bindings.forEach {
+            require(it.widgetId in widgetIds && it.slot.length in 1..32 && it.json.length <= 64_000) {
+                "Invalid widget binding"
+            }
+            decodeSource(it.json)
+        }
+        require(
+            backup.contextRules.map(ContextRuleEntity::id).toSet().size ==
+                backup.contextRules.size,
+        ) { "Backup contains duplicate context rules" }
+        backup.contextRules.forEach {
+            require(
+                it.id.length in 1..160 && it.pageId in pageIds &&
+                    it.conditionTemplate.length <= 64_000 &&
+                    it.activateAfterMs in 0L..60_000L &&
+                    it.deactivateAfterMs in 0L..60_000L,
+            ) { "Invalid context rule" }
+        }
     }
 
     private fun decodeWidget(row: WidgetWithDetails): WidgetConfig {

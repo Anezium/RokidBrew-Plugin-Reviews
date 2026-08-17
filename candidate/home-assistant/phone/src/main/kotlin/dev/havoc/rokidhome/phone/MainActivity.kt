@@ -1,6 +1,7 @@
 package dev.havoc.rokidhome.phone
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.Intent
 import android.net.Uri
@@ -14,12 +15,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import com.anezium.rokidbus.client.ui.BusTheme
 import com.anezium.rokidbus.client.ui.NexusUi
 import dev.havoc.rokidhome.phone.data.ConfigurationRepository
 import dev.havoc.rokidhome.phone.data.ContextRuleEntity
 import dev.havoc.rokidhome.phone.data.PageWithWidgets
 import dev.havoc.rokidhome.phone.data.WidgetWithDetails
+import dev.havoc.rokidhome.phone.backup.CredentialsBackup
+import dev.havoc.rokidhome.phone.backup.HomeAssistantBackup
+import dev.havoc.rokidhome.phone.backup.PortableBackupCodec
 import dev.havoc.rokidhome.phone.ha.HaConnectionState
 import dev.havoc.rokidhome.phone.ha.HomeAssistantClient
 import dev.havoc.rokidhome.shared.model.HomeAssistantAction
@@ -32,7 +37,14 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.jsonObject
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 abstract class NexusSettingsActivity : Activity() {
@@ -177,6 +189,8 @@ class MainActivity : NexusSettingsActivity() {
     private lateinit var haValue: TextView
     private lateinit var configValue: TextView
     private lateinit var statusLine: TextView
+    private var pendingExportUri: Uri? = null
+    private var pendingImportUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -226,6 +240,29 @@ class MainActivity : NexusSettingsActivity() {
             statusLine = NexusUi.statusLine(this@MainActivity).apply { text = "Ready" }
             block(statusLine)
             gap(24)
+            section("Backup and restore")
+            block(
+                NexusUi.card(this@MainActivity).apply {
+                    addView(
+                        NexusUi.cardBody(
+                            this@MainActivity,
+                            "Password-encrypted backup of the Home Assistant URL, long-lived access token, Rokid token, pages, widgets, actions and context rules. Keep both the file and password safe.",
+                        ),
+                    )
+                },
+            )
+            gap(8)
+            block(
+                actionRow(
+                    NexusUi.outlinePillButton(this@MainActivity, "Export settings").apply {
+                        setOnClickListener { chooseExportFile() }
+                    },
+                    NexusUi.outlinePillButton(this@MainActivity, "Import settings").apply {
+                        setOnClickListener { chooseImportFile() }
+                    },
+                ),
+            )
+            gap(24)
             section("Plugin")
             block(
                 NexusUi.card(this@MainActivity).apply {
@@ -253,7 +290,7 @@ class MainActivity : NexusSettingsActivity() {
                 },
             )
         }
-        showScreen("Home Assistant", "Nexus HUD dashboard · v0.2.1", body)
+        showScreen("Home Assistant", "Nexus HUD dashboard · v${BuildConfig.VERSION_NAME}", body)
         uiScope.launch {
             runtime.status.collect { status ->
                 haValue.text = status.haState.name
@@ -264,6 +301,187 @@ class MainActivity : NexusSettingsActivity() {
                 status.message?.let { report(statusLine, it, status.haState == HaConnectionState.AUTH_ERROR) }
             }
         }
+    }
+
+    @Deprecated("Uses the platform document picker result contract")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode != RESULT_OK || data?.data == null) return
+        when (requestCode) {
+            EXPORT_BACKUP_REQUEST -> {
+                pendingExportUri = data.data
+                promptExportPassword()
+            }
+            IMPORT_BACKUP_REQUEST -> {
+                pendingImportUri = data.data
+                promptImportPassword()
+            }
+        }
+    }
+
+    private fun chooseExportFile() {
+        val timestamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+        startActivityForResult(
+            Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json")
+                .putExtra(Intent.EXTRA_TITLE, "home-assistant-settings-$timestamp.rpb"),
+            EXPORT_BACKUP_REQUEST,
+        )
+    }
+
+    private fun chooseImportFile() {
+        startActivityForResult(
+            Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json"),
+            IMPORT_BACKUP_REQUEST,
+        )
+    }
+
+    private fun promptExportPassword() {
+        val password = passwordField("Backup password")
+        val confirmation = passwordField("Repeat password")
+        val fields = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val padding = NexusUi.dp(this@MainActivity, 20)
+            setPadding(padding, 0, padding, 0)
+            addView(password, NexusUi.block())
+            addView(BusTheme.gap(this@MainActivity, 8))
+            addView(confirmation, NexusUi.block())
+        }
+        AlertDialog.Builder(this)
+            .setTitle("Encrypt settings backup")
+            .setMessage("The backup includes your Home Assistant long-lived token. The password is not stored and cannot be recovered.")
+            .setView(fields)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> pendingExportUri = null }
+            .setPositiveButton("Export") { _, _ ->
+                val first = password.text.toString()
+                val second = confirmation.text.toString()
+                if (first.length < 8 || first != second) {
+                    Toast.makeText(
+                        this,
+                        "Passwords must match and contain at least 8 characters",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                    pendingExportUri = null
+                } else {
+                    exportSettings(first.toCharArray())
+                }
+            }
+            .show()
+    }
+
+    private fun promptImportPassword() {
+        val password = passwordField("Backup password")
+        AlertDialog.Builder(this)
+            .setTitle("Decrypt settings backup")
+            .setMessage("Import replaces the current connection credentials and dashboard configuration.")
+            .setView(password)
+            .setNegativeButton(android.R.string.cancel) { _, _ -> pendingImportUri = null }
+            .setPositiveButton("Continue") { _, _ ->
+                val value = password.text.toString()
+                if (value.length < 8) {
+                    Toast.makeText(this, "Enter the backup password", Toast.LENGTH_LONG).show()
+                    pendingImportUri = null
+                } else {
+                    decodeImport(value.toCharArray())
+                }
+            }
+            .show()
+    }
+
+    private fun exportSettings(password: CharArray) {
+        val uri = pendingExportUri.also { pendingExportUri = null } ?: return
+        report(statusLine, "Exporting encrypted settings…")
+        uiScope.launch {
+            runCatching {
+                val encoded = withContext(Dispatchers.IO) {
+                    val backup = HomeAssistantBackup(
+                        exportedAtEpochMs = System.currentTimeMillis(),
+                        credentials = CredentialsBackup.from(runtime.credentials.load()),
+                        configuration = repository.exportBackup(),
+                    )
+                    val plaintext = CanonicalData.json.encodeToString(backup)
+                    PortableBackupCodec.encrypt(HomeAssistantBackup.APP_ID, plaintext, password)
+                }
+                withContext(Dispatchers.IO) {
+                    contentResolver.openOutputStream(uri, "wt")?.bufferedWriter()?.use {
+                        it.write(encoded)
+                    } ?: error("Selected file is unavailable")
+                }
+            }.fold(
+                onSuccess = { report(statusLine, "Encrypted settings exported") },
+                onFailure = { report(statusLine, it.message ?: "Export failed", true) },
+            )
+            password.fill('\u0000')
+        }
+    }
+
+    private fun decodeImport(password: CharArray) {
+        val uri = pendingImportUri.also { pendingImportUri = null } ?: return
+        report(statusLine, "Decrypting settings backup…")
+        uiScope.launch {
+            val decoded = runCatching {
+                withContext(Dispatchers.IO) {
+                    val encoded = readBounded(uri)
+                    val plaintext = PortableBackupCodec.decrypt(
+                        HomeAssistantBackup.APP_ID,
+                        encoded,
+                        password,
+                    )
+                    CanonicalData.json.decodeFromString<HomeAssistantBackup>(plaintext)
+                }
+            }
+            password.fill('\u0000')
+            decoded.fold(
+                onSuccess = ::confirmImport,
+                onFailure = { report(statusLine, it.message ?: "Import failed", true) },
+            )
+        }
+    }
+
+    private fun confirmImport(backup: HomeAssistantBackup) {
+        AlertDialog.Builder(this)
+            .setTitle("Restore Home Assistant settings?")
+            .setMessage(
+                "This backup contains ${backup.configuration.pages.size} pages and ${backup.configuration.widgets.size} widgets. Current credentials and configuration will be replaced.",
+            )
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton("Restore") { _, _ ->
+                report(statusLine, "Restoring settings…")
+                uiScope.launch {
+                    runCatching {
+                        repository.importBackup(backup.configuration)
+                        runtime.credentials.save(backup.credentials.toCredentials())
+                        runtime.reconnect()
+                    }.fold(
+                        onSuccess = { report(statusLine, "Settings restored and published") },
+                        onFailure = { report(statusLine, it.message ?: "Restore failed", true) },
+                    )
+                }
+            }
+            .show()
+    }
+
+    private fun passwordField(hint: String) = field(hint).apply {
+        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+    }
+
+    private fun readBounded(uri: Uri): String {
+        val output = ByteArrayOutputStream()
+        contentResolver.openInputStream(uri)?.use { input ->
+            val buffer = ByteArray(8_192)
+            var total = 0
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                total += count
+                require(total <= MAX_BACKUP_BYTES) { "Backup file exceeds 4 MB" }
+                output.write(buffer, 0, count)
+            }
+        } ?: error("Selected file is unavailable")
+        return output.toString(Charsets.UTF_8.name())
     }
 
     private fun statusCard(): LinearLayout = NexusUi.card(this).apply {
@@ -887,3 +1105,6 @@ const val EXTRA_RULE_ID = "rule_id"
 private const val SOURCE_LITERAL = "literal"
 private const val SOURCE_ENTITY = "entity"
 private const val SOURCE_TEMPLATE = "template"
+private const val EXPORT_BACKUP_REQUEST = 801
+private const val IMPORT_BACKUP_REQUEST = 802
+private const val MAX_BACKUP_BYTES = 4 * 1024 * 1024

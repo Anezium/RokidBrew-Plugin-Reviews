@@ -49,6 +49,11 @@ New installations start with a neutral guide page. Add your own pages, widgets,
 entity IDs, actions, and optional context rules from the phone settings, then
 publish the configuration to the Nexus HUD.
 
+Settings provide password-encrypted **Export settings** and **Import settings** actions.
+The portable backup includes the Home Assistant URL and long-lived token plus all editable
+pages, widgets, actions, value bindings, and context rules. The password is not stored and
+cannot be recovered.
+
 ## Glasses controls
 
 - Page mode: forward/backward scroll changes pages; tap enters control focus; Back closes the Nexus surface immediately.

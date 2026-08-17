@@ -16,7 +16,7 @@ tasks.register<Copy>("packageDebugApk") {
     dependsOn(":phone:assembleDebug")
     into(layout.buildDirectory.dir("outputs"))
     from(project(":phone").layout.buildDirectory.file("outputs/apk/debug/phone-debug.apk")) {
-        rename { "Home-Assistant-for-Rokid-Nexus-0.2.1-debug.apk" }
+        rename { "Home-Assistant-for-Rokid-Nexus-0.2.2-debug.apk" }
     }
 }
 

@@ -9,6 +9,11 @@ glasses payload. Entity state and configured dashboard data are processed locall
 to render the selected Nexus surface. The plugin does not operate an external
 service and does not send Home Assistant credentials or state to the plugin author.
 
+The settings screen can export credentials and dashboard configuration to a portable
+backup selected by the user. Backups are encrypted with AES-256-GCM using a key derived
+from a user-supplied password with PBKDF2-HMAC-SHA256. The password is never stored. An
+export includes the Home Assistant long-lived access token and must be protected together
+with its password. Import requires the password and explicit replacement confirmation.
+
 Removing the plugin deletes its private Android app data. Revoking the long-lived
 access token in Home Assistant immediately prevents further access with that token.
-

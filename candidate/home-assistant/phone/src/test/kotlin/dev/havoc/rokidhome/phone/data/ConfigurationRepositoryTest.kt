@@ -83,4 +83,35 @@ class ConfigurationRepositoryTest {
         assertNull(published.pages.single().widgets.singleOrNull { it.action != null })
         database.close()
     }
+
+    @Test fun portableBackupReplacesEditableConfigurationAndPublishesIt() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val sourceDatabase = Room.inMemoryDatabaseBuilder(
+            context,
+            AppDatabase::class.java,
+        ).allowMainThreadQueries().build()
+        val source = ConfigurationRepository(sourceDatabase)
+        val pageId = source.addPage("Portable dashboard")
+        val widgetId = source.addWidget(
+            pageId,
+            dev.havoc.rokidhome.shared.model.WidgetType.TEXT,
+        )
+        source.saveBinding(widgetId, "primary", ValueSource.Literal("Restored"))
+        val backup = source.exportBackup()
+
+        val targetDatabase = Room.inMemoryDatabaseBuilder(
+            context,
+            AppDatabase::class.java,
+        ).allowMainThreadQueries().build()
+        val target = ConfigurationRepository(targetDatabase)
+        target.ensureSeeded()
+        target.importBackup(backup)
+
+        val restored = target.currentPublished()
+        assertNotNull(restored)
+        assertEquals(listOf("Portable dashboard"), restored!!.pages.map { it.name })
+        assertEquals(1, restored.pages.single().widgets.size)
+        sourceDatabase.close()
+        targetDatabase.close()
+    }
 }

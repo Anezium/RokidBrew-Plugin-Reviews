@@ -3,20 +3,26 @@ package dev.havoc.rokidhome.phone.data
 import android.content.Context
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 @Entity(tableName = "pages")
+@Serializable
 data class PageEntity(@PrimaryKey val id: String, val name: String, val position: Int)
 
 @Entity(tableName = "widgets", foreignKeys = [ForeignKey(entity = PageEntity::class, parentColumns = ["id"], childColumns = ["pageId"], onDelete = ForeignKey.CASCADE)], indices = [Index("pageId")])
+@Serializable
 data class WidgetEntity(@PrimaryKey val id: String, val pageId: String, val type: String, val position: Int)
 
 @Entity(tableName = "actions", primaryKeys = ["widgetId", "slot"], foreignKeys = [ForeignKey(entity = WidgetEntity::class, parentColumns = ["id"], childColumns = ["widgetId"], onDelete = ForeignKey.CASCADE)], indices = [Index("widgetId")])
+@Serializable
 data class ActionEntity(val widgetId: String, val slot: String, val json: String)
 
 @Entity(tableName = "bindings", primaryKeys = ["widgetId", "slot"], foreignKeys = [ForeignKey(entity = WidgetEntity::class, parentColumns = ["id"], childColumns = ["widgetId"], onDelete = ForeignKey.CASCADE)], indices = [Index("widgetId")])
+@Serializable
 data class BindingEntity(val widgetId: String, val slot: String, val json: String)
 
 @Entity(tableName = "context_rules")
+@Serializable
 data class ContextRuleEntity(
     @PrimaryKey val id: String,
     val enabled: Boolean,
@@ -74,6 +80,9 @@ interface ConfigurationDao {
     @Query("DELETE FROM actions WHERE widgetId = :widgetId AND slot = :slot")
     suspend fun deleteAction(widgetId: String, slot: String)
     @Query("DELETE FROM context_rules WHERE id = :id") suspend fun deleteRule(id: String)
+    @Query("DELETE FROM published_configuration") suspend fun clearPublished()
+    @Query("DELETE FROM context_rules") suspend fun clearRules()
+    @Query("DELETE FROM pages") suspend fun clearPages()
 }
 
 @Database(
