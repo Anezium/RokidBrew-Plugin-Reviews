@@ -26,19 +26,27 @@ public final class AdapterBundleValidator {
             "NORMALIZE_RANGE", "CLEAN_VEHICLE");
 
     public AdapterBundle validate(AdapterBundle bundle) {
+        return validate(bundle, false);
+    }
+
+    public AdapterBundle validateImported(AdapterBundle bundle) {
+        return validate(bundle, true);
+    }
+
+    private AdapterBundle validate(AdapterBundle bundle, boolean imported) {
         require(bundle != null, "Adapter bundle is empty");
         require(bundle.schemaVersion == SCHEMA_VERSION, "Unsupported schemaVersion");
         require(!bundle.adapters.isEmpty(), "Bundle must contain adapters");
         require(bundle.adapters.size() <= MAX_ADAPTERS, "Too many adapters");
         Set<String> ids = new HashSet<>();
         for (NotificationAdapterConfig adapter : bundle.adapters) {
-            validateAdapter(adapter);
+            validateAdapter(adapter, imported);
             require(ids.add(adapter.id), "Duplicate adapter id: " + adapter.id);
         }
         return bundle;
     }
 
-    private static void validateAdapter(NotificationAdapterConfig adapter) {
+    private static void validateAdapter(NotificationAdapterConfig adapter, boolean imported) {
         require(adapter != null, "Adapter is null");
         require(ID.matcher(adapter.id).matches(), "Invalid adapter id: " + adapter.id);
         require(!adapter.displayName.trim().isEmpty() && adapter.displayName.length() <= 80,
@@ -57,18 +65,18 @@ public final class AdapterBundleValidator {
         require(adapter.truncateBeforePatterns.size() <= MAX_RULES,
                 "Too many truncate patterns");
         for (String pattern : adapter.truncateBeforePatterns) {
-            compile(pattern, true, 0);
+            compile(pattern, true, 0, imported);
         }
         for (NotificationAdapterConfig.EventRule rule : adapter.eventRules) {
             require(rule != null && EVENTS.contains(upper(rule.event)),
                     "Unsupported event: " + (rule == null ? "null" : rule.event));
-            compile(rule.pattern, rule.ignoreCase, 0);
+            compile(rule.pattern, rule.ignoreCase, 0, imported);
         }
         Set<String> configuredFields = new HashSet<>();
         for (NotificationAdapterConfig.FieldRule rule : adapter.fieldRules) {
             require(rule != null && FIELDS.contains(upper(rule.field)),
                     "Unsupported field: " + (rule == null ? "null" : rule.field));
-            compile(rule.pattern, rule.ignoreCase, rule.group);
+            compile(rule.pattern, rule.ignoreCase, rule.group, imported);
             configuredFields.add(upper(rule.field));
             for (String transform : rule.transforms) {
                 require(TRANSFORMS.contains(upper(transform)),
@@ -88,17 +96,30 @@ public final class AdapterBundleValidator {
                 "pinTtlMs is outside Nexus limits");
     }
 
-    private static void compile(String pattern, boolean ignoreCase, int group) {
+    private static void compile(
+            String pattern, boolean ignoreCase, int group, boolean imported) {
         require(pattern != null && !pattern.isEmpty() && pattern.length() <= MAX_PATTERN_CHARS,
                 "Invalid regex length");
         require(group >= 0, "Capture group must be non-negative");
-        try {
-            int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
-            Pattern compiled = Pattern.compile(pattern, flags);
-            require(group <= compiled.matcher("").groupCount(),
-                    "Capture group " + group + " does not exist");
-        } catch (PatternSyntaxException exception) {
-            throw new IllegalArgumentException("Invalid regex: " + exception.getDescription());
+        if (imported) {
+            try {
+                int flags = ignoreCase ? com.google.re2j.Pattern.CASE_INSENSITIVE : 0;
+                com.google.re2j.Pattern compiled = com.google.re2j.Pattern.compile(pattern, flags);
+                require(group <= compiled.matcher("").groupCount(),
+                        "Capture group " + group + " does not exist");
+            } catch (com.google.re2j.PatternSyntaxException exception) {
+                throw new IllegalArgumentException(
+                        "Unsafe or unsupported imported regex: " + exception.getDescription());
+            }
+        } else {
+            try {
+                int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
+                Pattern compiled = Pattern.compile(pattern, flags);
+                require(group <= compiled.matcher("").groupCount(),
+                        "Capture group " + group + " does not exist");
+            } catch (PatternSyntaxException exception) {
+                throw new IllegalArgumentException("Invalid regex: " + exception.getDescription());
+            }
         }
     }
 

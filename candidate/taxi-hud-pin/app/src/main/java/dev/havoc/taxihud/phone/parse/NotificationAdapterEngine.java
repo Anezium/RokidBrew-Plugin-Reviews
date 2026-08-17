@@ -11,6 +11,8 @@ import dev.havoc.taxihud.phone.NotificationTiming;
 import dev.havoc.taxihud.phone.config.NotificationAdapterConfig;
 
 public final class NotificationAdapterEngine {
+    static final int MAX_MATCH_BODY_CHARS = 8_192;
+
     public AdapterParseResult parse(
             String packageName,
             String title,
@@ -55,7 +57,7 @@ public final class NotificationAdapterEngine {
             NotificationAdapterConfig adapter,
             long eventTimestampMs,
             NotificationTiming timing) {
-        String event = firstEvent(body, adapter.eventRules);
+        String event = firstEvent(body, adapter.eventRules, adapter.imported);
         if ("STARTED".equals(event)) {
             return TaxiUpdate.tripStarted(timing.countdownDeadline(eventTimestampMs));
         }
@@ -70,7 +72,9 @@ public final class NotificationAdapterEngine {
         }
 
         Map<String, String> values = extractFields(
-                truncate(body, adapter.truncateBeforePatterns), adapter.fieldRules);
+                truncate(body, adapter.truncateBeforePatterns, adapter.imported),
+                adapter.fieldRules,
+                adapter.imported);
         long countdownDeadline = timing.countdownDeadline(eventTimestampMs);
         if (countdownDeadline > 0L) {
             return TaxiUpdate.tripProgress(countdownDeadline);
@@ -106,9 +110,9 @@ public final class NotificationAdapterEngine {
     }
 
     private static String firstEvent(
-            String body, List<NotificationAdapterConfig.EventRule> rules) {
+            String body, List<NotificationAdapterConfig.EventRule> rules, boolean imported) {
         for (NotificationAdapterConfig.EventRule rule : rules) {
-            if (pattern(rule.pattern, rule.ignoreCase).matcher(body).find()) {
+            if (find(rule.pattern, rule.ignoreCase, body, imported) != null) {
                 return upper(rule.event);
             }
         }
@@ -116,18 +120,20 @@ public final class NotificationAdapterEngine {
     }
 
     private static Map<String, String> extractFields(
-            String body, List<NotificationAdapterConfig.FieldRule> rules) {
+            String body,
+            List<NotificationAdapterConfig.FieldRule> rules,
+            boolean imported) {
         Map<String, String> values = new LinkedHashMap<>();
         for (NotificationAdapterConfig.FieldRule rule : rules) {
             String field = upper(rule.field);
             if (values.containsKey(field)) {
                 continue;
             }
-            Matcher matcher = pattern(rule.pattern, rule.ignoreCase).matcher(body);
-            if (!matcher.find()) {
+            FoundMatch match = find(rule.pattern, rule.ignoreCase, body, imported);
+            if (match == null) {
                 continue;
             }
-            String raw = rule.group == 0 ? matcher.group() : matcher.group(rule.group);
+            String raw = match.group(rule.group);
             String transformed = transform(raw, rule.transforms);
             if (!transformed.isEmpty()) {
                 values.put(field, transformed);
@@ -165,12 +171,12 @@ public final class NotificationAdapterEngine {
         return result;
     }
 
-    private static String truncate(String body, List<String> patterns) {
+    private static String truncate(String body, List<String> patterns, boolean imported) {
         int end = body.length();
         for (String expression : patterns) {
-            Matcher matcher = pattern(expression, true).matcher(body);
-            if (matcher.find()) {
-                end = Math.min(end, matcher.start());
+            FoundMatch match = find(expression, true, body, imported);
+            if (match != null) {
+                end = Math.min(end, match.start());
             }
         }
         return body.substring(0, end);
@@ -197,6 +203,44 @@ public final class NotificationAdapterEngine {
     private static Pattern pattern(String expression, boolean ignoreCase) {
         int flags = ignoreCase ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
         return Pattern.compile(expression, flags);
+    }
+
+    private static FoundMatch find(
+            String expression, boolean ignoreCase, String input, boolean imported) {
+        if (imported) {
+            int flags = ignoreCase ? com.google.re2j.Pattern.CASE_INSENSITIVE : 0;
+            com.google.re2j.Matcher matcher =
+                    com.google.re2j.Pattern.compile(expression, flags).matcher(input);
+            if (!matcher.find()) {
+                return null;
+            }
+            return new FoundMatch() {
+                @Override
+                public String group(int group) {
+                    return matcher.group(group);
+                }
+
+                @Override
+                public int start() {
+                    return matcher.start();
+                }
+            };
+        }
+        Matcher matcher = pattern(expression, ignoreCase).matcher(input);
+        if (!matcher.find()) {
+            return null;
+        }
+        return new FoundMatch() {
+            @Override
+            public String group(int group) {
+                return matcher.group(group);
+            }
+
+            @Override
+            public int start() {
+                return matcher.start();
+            }
+        };
     }
 
     private static String cleanVehicle(String raw) {
@@ -258,13 +302,23 @@ public final class NotificationAdapterEngine {
     }
 
     private static void append(StringBuilder builder, String value) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || builder.length() >= MAX_MATCH_BODY_CHARS) {
+            return;
+        }
+        int separatorChars = builder.length() > 0 ? 1 : 0;
+        int remaining = MAX_MATCH_BODY_CHARS - builder.length() - separatorChars;
+        if (remaining <= 0) {
+            return;
+        }
+        String bounded = value.length() > remaining ? value.substring(0, remaining) : value;
+        bounded = bounded.trim();
+        if (bounded.isEmpty()) {
             return;
         }
         if (builder.length() > 0) {
             builder.append('\n');
         }
-        builder.append(value.trim());
+        builder.append(bounded);
     }
 
     private static String prefer(String preferred, String fallback) {
@@ -295,5 +349,11 @@ public final class NotificationAdapterEngine {
 
     private static String value(String value) {
         return value == null ? "" : value;
+    }
+
+    private interface FoundMatch {
+        String group(int group);
+
+        int start();
     }
 }

@@ -132,7 +132,7 @@ public final class RideStateMachine {
         }
 
         // Late pre-pickup notification updates can arrive after the trip-start event.
-        // They must not turn the plate PIN back on or replace the trip countdown.
+        // They must not turn the plate pin back on or replace the trip countdown.
         if (state.tripInProgress
                 && (update.kind == TaxiUpdate.Kind.ACTIVE
                         || update.kind == TaxiUpdate.Kind.WAITING)) {

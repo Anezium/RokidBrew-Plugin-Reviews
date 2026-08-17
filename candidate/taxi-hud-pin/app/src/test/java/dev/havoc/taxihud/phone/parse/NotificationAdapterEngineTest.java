@@ -77,6 +77,37 @@ public final class NotificationAdapterEngineTest {
         assertEquals(10_000L + 65L * 60_000L, result.update.tripEndsAtEpochMs);
     }
 
+    @Test(timeout = 2_000L)
+    public void hostileImportedRegexCannotBlockNotificationParsing() {
+        String hostile = customBundle("hostile-cab", "com.example.hostile")
+                .replace("PLATE=([A-Z0-9]+)", "(a+)+$");
+        repository.importJson(hostile);
+
+        AdapterParseResult result = engine.parse(
+                "com.example.hostile",
+                "a".repeat(NotificationAdapterEngine.MAX_MATCH_BODY_CHARS - 1) + "!"
+                        + "a".repeat(200_000),
+                "",
+                "",
+                Collections.emptyList(),
+                repository.enabledAdapters());
+
+        assertFalse(result.matched());
+    }
+
+    @Test public void importedRegexRejectsUnsupportedBacktrackingFeatures() {
+        String lookbehind = customBundle("unsafe-cab", "com.example.unsafe")
+                .replace("PLATE=([A-Z0-9]+)", "(?<=PLATE=)([A-Z0-9]+)");
+        try {
+            repository.importJson(lookbehind);
+            throw new AssertionError("Expected imported lookbehind to be rejected");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Unsafe or unsupported"));
+        }
+
+        assertTrue(repository.handlesPackage("ru.yandex.go"));
+    }
+
     public static String customBundle(String id, String packageName) {
         return "{\"schemaVersion\":1,\"metadata\":{\"id\":\"custom.bundle\","
                 + "\"displayName\":\"Custom\",\"author\":\"test\",\"version\":1},"
